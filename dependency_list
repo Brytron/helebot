@@ -1,0 +1,8 @@
+pip install Pillow;
+pip install requests;
+pip install python-dateutil;
+pip install openpyxl;
+pip install -U discord.py[voice];
+pip install google-api-python-client;
+pip install google-auth-oauthlib;
+pip install pytz;
