@@ -20,7 +20,8 @@ TOKEN = 'Mzg4MTQyOTA1NjI3MjQ2NjEy.XRrZPg.HN9i3nbzgdDASAPx1M1uOomCWgM'
 #
 # needs implementing:
 # change requests to asnc function
-#
+# fix sound playback
+
 description = '''Helebot version 0.2'''
 bot = commands.Bot(command_prefix='*', description=description)
 #initialize calendar
@@ -406,7 +407,7 @@ async def comp(ctx,player,season=current_season, console="steam", file_type="she
 
 
 @bot.command()
-async def banner(ctx, player, week=None, season=None, console="steam", file_type="sheets", tz="US/Pacific"):
+async def banner(ctx, player, week=None, season=current_season, console="steam", file_type="sheets", tz="US/Pacific"):
     """builds a excel file(compatible with google sheets) of stats, and progression for a specified season or week of iron banner for an individual destiny player
     Example: banner Brytron 8/27/19 S6 pc sheets or banner Brytron#11867 skip S6, pc, excel
     only supports S6 and S7"""
@@ -418,6 +419,21 @@ async def banner(ctx, player, week=None, season=None, console="steam", file_type
         await ctx.send(file_link)
     else:
         ctx.send("file type is not supported")
+
+@bot.command()
+async def trials(ctx, player, week=None, season=current_season, console="steam", file_type="sheets", tz="US/Pacific"):
+    """builds a excel file(compatible with google sheets) of stats, and progression for a specified season or week of trials for an individual destiny player
+    Example: trials Brytron 8/27/19 S6 pc sheets or trials Brytron#11867 skip S6, pc, excel
+    only supports S6 and S7"""
+    file_name = await trials_stats(player, console, season, week, tz)
+    if file_type == "excel":
+        await ctx.send(file=discord.File(file_name))
+    elif file_type == "sheets":
+        file_link = excel_to_sheets(drive_service, file_name)
+        await ctx.send(file_link)
+    else:
+        ctx.send("file type is not supported")
+
 
 
 @bot.command()

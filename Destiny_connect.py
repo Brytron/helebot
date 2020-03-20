@@ -30,9 +30,11 @@ my_headers = my_headers = {"X-API-Key": my_api_key}
 membership_types = {'xbox': '1',  'xbone': '1', 'psn': '2', 'pc': '4', 'ps4': '2', 'all': '-1', 'steam': '3'}
 seasons = \
     {'S7': ["2019-06-04T17:00:00Z", "2019-10-01T17:00:00Z"], 'S6': ["2019-03-05T17:00:00Z", "2019-06-04T17:00:00Z"],
-     'S8': ["2019-10-01T17:00:00Z", "2019-12-05T17:00:00Z"], 'S9': ["2019-12-10T17:00:00Z", "2020-03-09T17:00:00Z"]}
+     'S8': ["2019-10-01T17:00:00Z", "2019-12-010T17:00:00Z"], 'S9': ["2019-12-10T17:00:00Z", "2020-03-09T17:00:00Z"],
+     'S10': ["2020-03-09T17:00:00Z", "2020-06-09T17:00:00Z"]}
 current_season = 'S9'
 game_types = { 74:'Control', 72:'Clash', 37:'Survival', 38:'Countdown'}
+trials_game_type = {84:'Elimination'}
 
 D2Profiles = CharCache()
 D2Stats = CharCache()
@@ -212,6 +214,83 @@ async def banner_stats(name, console="pc", season=None, week=None, tz="US/Pacifi
         time = find_scope_time(season,week)
         build = await build_banner(session, name, console, time['start'], time['stop'])
         return pushto_excel_banner(build, time['start'], time['stop'], name, tz)
+
+
+async def build_trials(session, name, console, start_search_on, stop_search_on):
+
+    profile = await find_profile(session, name, console)
+    win_list = []
+    for character in profile.char_ids:
+        page = 0
+        try:
+            stats = await get_historical_activitys(session, profile.user_id, console, character, '5', '0', '84')
+            print(stats)
+            while 'activities' in stats and stats['activities'][0]['period'] > start_search_on:
+                page = page + 1
+                num = 0
+                next_time = stats['activities'][num]['period']
+                while num < 5 and next_time > start_search_on and stats['activities'][num]['period'] < stop_search_on:
+                    win_dict = {}
+                    win_dict['period'] = stats['activities'][num]['period']
+                    win_dict['win/loss'] = stats['activities'][num]['values']['standing']['basic']['displayValue']
+                    win_dict['kills'] = stats['activities'][num]['values']['kills']['basic']['value']
+                    win_dict['assists'] = stats['activities'][num]['values']['assists']['basic']['value']
+                    win_dict['deaths'] = stats['activities'][num]['values']['deaths']['basic']['value']
+                    win_dict['mode'] = stats['activities'][num]['activityDetails']['mode']
+                    win_dict['duration'] = stats['activities'][num]['values']['activityDurationSeconds']['basic']['value']
+                    win_list.append(win_dict)
+                    print(win_dict)
+                    num = num + 1
+                    try:
+                        next_time = stats['activities'][num]['period']
+                    except IndexError:
+                        next_time = 0
+                        print("end of games")
+
+                stats = await get_historical_activitys(session, profile.user_id, console, character, '5', str(page), '84')
+
+        except TypeError:
+            print("trials history does not exist for this character")
+
+    return sorted(win_list, key=itemgetter('period'))
+
+
+def pushto_excel_trials(trials_build, time_start, time_stop, savename, tz):
+    """push win and loss data to excel sheet"""
+    time_start = parser.parse(time_start).astimezone(timezone(tz))
+    time_stop = parser.parse(time_stop).astimezone(timezone(tz))
+    wb = load_workbook(filename='trials_base.xlsx')
+    ws = wb.active
+    ws['B2'] = time_start.date()
+    ws['B3'] = time_stop.date()
+    game_col = 6
+    for game in trials_build:
+        ws['A'+str(game_col)] = game_col - 5
+        game_date = parser.parse(game['period']).astimezone(timezone(tz))
+
+        if game['win/loss'] == "Victory":
+            ws['B'+str(game_col)] = "W"
+        else:
+            ws['B' + str(game_col)] = "L"
+
+        ws['C' + str(game_col)] = game['kills']
+        ws['D' + str(game_col)] = game['assists']
+        ws['E' + str(game_col)] = game['deaths']
+        ws['H' + str(game_col)] = game_date.date()
+        ws['I' + str(game_col)] = game_date.time()
+        ws['N' + str(game_col)] = game['duration']
+        game_col = game_col+1
+
+    filename = f'{time_start.strftime("%m_%d_%y")}trials_{savename}.xlsx'
+    wb.save(filename)
+    return filename
+
+
+async def trials_stats(name, console="pc", season=None, week=None, tz="US/Pacific"):
+    async with aiohttp.ClientSession() as session:
+        time = find_scope_time(season,week)
+        build = await build_trials(session, name, console, time['start'], time['stop'])
+        return pushto_excel_trials(build, time['start'], time['stop'], name, tz)
 
 
 async def build_comp(session, name, console, season):
