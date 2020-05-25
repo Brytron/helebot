@@ -11,7 +11,7 @@ from google_spreedsheet_connect import *
 
 from discord.ext import commands
 
-TOKEN = 'Mzg4MTQyOTA1NjI3MjQ2NjEy.XRrZPg.HN9i3nbzgdDASAPx1M1uOomCWgM'
+TOKEN = 'Mzg4MTQyOTA1NjI3MjQ2NjEy.Xswoaw.0GCYsY8wohtKiAQ36HQ4QBP1TQQ'
 #version 0.14
 #
 #warnings:
