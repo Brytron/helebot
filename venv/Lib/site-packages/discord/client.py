@@ -3,7 +3,7 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-2019 Rapptz
+Copyright (c) 2015-2020 Rapptz
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -45,7 +45,7 @@ from .member import Member
 from .errors import *
 from .enums import Status, VoiceRegion
 from .gateway import *
-from .activity import _ActivityTag, create_activity
+from .activity import BaseActivity, create_activity
 from .voice_client import VoiceClient
 from .http import HTTPClient
 from .state import ConnectionState
@@ -74,7 +74,7 @@ def _cancel_tasks(loop):
     for task in tasks:
         task.cancel()
 
-    loop.run_until_complete(asyncio.gather(*tasks, loop=loop, return_exceptions=True))
+    loop.run_until_complete(asyncio.gather(*tasks, return_exceptions=True))
     log.info('All tasks finished cancelling.')
 
     for task in tasks:
@@ -122,8 +122,10 @@ class Client:
     -----------
     max_messages: Optional[:class:`int`]
         The maximum number of messages to store in the internal message cache.
-        This defaults to 5000. Passing in ``None`` or a value less than 100
-        will use the default instead of the passed in value.
+        This defaults to 1000. Passing in ``None`` disables the message cache.
+
+        .. versionchanged:: 1.3
+            Allow disabling the message cache and change the default size to 1000.
     loop: Optional[:class:`asyncio.AbstractEventLoop`]
         The :class:`asyncio.AbstractEventLoop` to use for asynchronous operations.
         Defaults to ``None``, in which case the default event loop is used via
@@ -145,13 +147,52 @@ class Client:
         must be used to fetch the offline members of the guild.
     status: Optional[:class:`.Status`]
         A status to start your presence with upon logging on to Discord.
-    activity: Optional[Union[:class:`.Activity`, :class:`.Game`, :class:`.Streaming`]]
+    activity: Optional[:class:`.BaseActivity`]
         An activity to start your presence with upon logging on to Discord.
     heartbeat_timeout: :class:`float`
         The maximum numbers of seconds before timing out and restarting the
         WebSocket in the case of not receiving a HEARTBEAT_ACK. Useful if
         processing the initial packets take too long to the point of disconnecting
         you. The default timeout is 60 seconds.
+    guild_subscriptions: :class:`bool`
+        Whether to dispatching of presence or typing events. Defaults to ``True``.
+
+        .. versionadded:: 1.3
+
+        .. warning::
+
+            If this is set to ``False`` then the following features will be disabled:
+
+                - No user related updates (:func:`on_user_update` will not dispatch)
+                - All member related events will be disabled.
+                    - :func:`on_member_update`
+                    - :func:`on_member_join`
+                    - :func:`on_member_remove`
+
+                - Typing events will be disabled (:func:`on_typing`).
+                - If ``fetch_offline_members`` is set to ``False`` then the user cache will not exist.
+                  This makes it difficult or impossible to do many things, for example:
+
+                    - Computing permissions
+                    - Querying members in a voice channel via :attr:`VoiceChannel.members` will be empty.
+                    - Most forms of receiving :class:`Member` will be
+                      receiving :class:`User` instead, except for message events.
+                    - :attr:`Guild.owner` will usually resolve to ``None``.
+                    - :meth:`Guild.get_member` will usually be unavailable.
+                    - Anything that involves using :class:`Member`.
+                    - :attr:`users` will not be as populated.
+                    - etc.
+
+            In short, this makes it so the only member you can reliably query is the
+            message author. Useful for bots that do not require any state.
+    assume_unsync_clock: :class:`bool`
+        Whether to assume the system clock is unsynced. This applies to the ratelimit handling
+        code. If this is set to ``True``, the default, then the library uses the time to reset
+        a rate limit bucket given by Discord. If this is ``False`` then your system clock is
+        used to calculate how long to sleep for. If this is set to ``False`` it is recommended to
+        sync your system clock to Google's NTP server.
+
+        .. versionadded:: 1.3
 
     Attributes
     -----------
@@ -170,7 +211,8 @@ class Client:
         connector = options.pop('connector', None)
         proxy = options.pop('proxy', None)
         proxy_auth = options.pop('proxy_auth', None)
-        self.http = HTTPClient(connector, proxy=proxy, proxy_auth=proxy_auth, loop=self.loop)
+        unsync_clock = options.pop('assume_unsync_clock', True)
+        self.http = HTTPClient(connector, proxy=proxy, proxy_auth=proxy_auth, unsync_clock=unsync_clock, loop=self.loop)
 
         self._handlers = {
             'ready': self._handle_ready
@@ -181,7 +223,7 @@ class Client:
 
         self._connection.shard_count = self.shard_count
         self._closed = False
-        self._ready = asyncio.Event(loop=self.loop)
+        self._ready = asyncio.Event()
         self._connection._get_websocket = lambda g: self.ws
 
         if VoiceClient.warn_nacl:
@@ -241,9 +283,9 @@ class Client:
     def cached_messages(self):
         """Sequence[:class:`.Message`]: Read-only list of messages the connected client has cached.
 
-        .. versionadded:: 1.1.0
+        .. versionadded:: 1.1
         """
-        return utils.SequenceProxy(self._connection._messages)
+        return utils.SequenceProxy(self._connection._messages or [])
 
     @property
     def private_channels(self):
@@ -397,7 +439,7 @@ class Client:
         """
 
         log.info('logging in using static token')
-        await self.http.static_login(token, bot=bot)
+        await self.http.static_login(token.strip(), bot=bot)
         self._connection.is_bot = bot
 
     async def logout(self):
@@ -415,7 +457,7 @@ class Client:
 
     async def _connect(self):
         coro = DiscordWebSocket.from_client(self, shard_id=self.shard_id)
-        self.ws = await asyncio.wait_for(coro, timeout=180.0, loop=self.loop)
+        self.ws = await asyncio.wait_for(coro, timeout=180.0)
         while True:
             try:
                 await self.ws.poll_event()
@@ -424,7 +466,7 @@ class Client:
                 self.dispatch('disconnect')
                 coro = DiscordWebSocket.from_client(self, shard_id=self.shard_id, session=self.ws.session_id,
                                                     sequence=self.ws.sequence, resume=True)
-                self.ws = await asyncio.wait_for(coro, timeout=180.0, loop=self.loop)
+                self.ws = await asyncio.wait_for(coro, timeout=180.0)
 
     async def connect(self, *, reconnect=True):
         """|coro|
@@ -486,7 +528,7 @@ class Client:
 
                 retry = backoff.delay()
                 log.exception("Attempting a reconnect in %.2fs", retry)
-                await asyncio.sleep(retry, loop=self.loop)
+                await asyncio.sleep(retry)
 
     async def close(self):
         """|coro|
@@ -507,7 +549,7 @@ class Client:
                 pass
 
         if self.ws is not None and self.ws.open:
-            await self.ws.close()
+            await self.ws.close(code=1000)
 
         self._ready.clear()
 
@@ -605,7 +647,7 @@ class Client:
 
     @property
     def activity(self):
-        """Optional[Union[:class:`.Activity`, :class:`.Game`, :class:`.Streaming`]]: The activity being used upon
+        """Optional[:class:`.BaseActivity`]: The activity being used upon
         logging in.
         """
         return create_activity(self._connection._activity)
@@ -614,10 +656,10 @@ class Client:
     def activity(self, value):
         if value is None:
             self._connection._activity = None
-        elif isinstance(value, _ActivityTag):
+        elif isinstance(value, BaseActivity):
             self._connection._activity = value.to_dict()
         else:
-            raise TypeError('activity must be one of Game, Streaming, or Activity.')
+            raise TypeError('activity must derive from BaseActivity.')
 
     # helpers/getters
 
@@ -627,31 +669,62 @@ class Client:
         return list(self._connection._users.values())
 
     def get_channel(self, id):
-        """Optional[Union[:class:`.abc.GuildChannel`, :class:`.abc.PrivateChannel`]]: Returns a channel with the
-        given ID.
+        """Returns a channel with the given ID.
 
-        If not found, returns ``None``.
+        Parameters
+        -----------
+        id: :class:`int`
+            The ID to search for.
+
+        Returns
+        --------
+        Optional[Union[:class:`.abc.GuildChannel`, :class:`.abc.PrivateChannel`]]
+            The returned channel or ``None`` if not found.
         """
         return self._connection.get_channel(id)
 
     def get_guild(self, id):
-        """Optional[:class:`.Guild`]: Returns a guild with the given ID.
+        """Returns a guild with the given ID.
 
-        If not found, returns ``None``.
+        Parameters
+        -----------
+        id: :class:`int`
+            The ID to search for.
+
+        Returns
+        --------
+        Optional[:class:`.Guild`]
+            The guild or ``None`` if not found.
         """
         return self._connection._get_guild(id)
 
     def get_user(self, id):
-        """Optional[:class:`~discord.User`]: Returns a user with the given ID.
+        """Returns a user with the given ID.
 
-        If not found, returns ``None``.
+        Parameters
+        -----------
+        id: :class:`int`
+            The ID to search for.
+
+        Returns
+        --------
+        Optional[:class:`~discord.User`]
+            The user or ``None`` if not found.
         """
         return self._connection.get_user(id)
 
     def get_emoji(self, id):
-        """Optional[:class:`.Emoji`]: Returns an emoji with the given ID.
+        """Returns an emoji with the given ID.
 
-        If not found, returns ``None``.
+        Parameters
+        -----------
+        id: :class:`int`
+            The ID to search for.
+
+        Returns
+        --------
+        Optional[:class:`.Emoji`]
+            The custom emoji or ``None`` if not found.
         """
         return self._connection.get_emoji(id)
 
@@ -793,7 +866,7 @@ class Client:
             self._listeners[ev] = listeners
 
         listeners.append((future, check))
-        return asyncio.wait_for(future, timeout, loop=self.loop)
+        return asyncio.wait_for(future, timeout)
 
     # event registration
 
@@ -831,10 +904,6 @@ class Client:
 
         Changes the client's presence.
 
-        The activity parameter is a :class:`.Activity` object (not a string) that represents
-        the activity being done currently. This could also be the slimmed down versions,
-        :class:`.Game` and :class:`.Streaming`.
-
         Example
         ---------
 
@@ -845,7 +914,7 @@ class Client:
 
         Parameters
         ----------
-        activity: Optional[Union[:class:`.Game`, :class:`.Streaming`, :class:`.Activity`]]
+        activity: Optional[:class:`.BaseActivity`]
             The activity being done. ``None`` if no currently active activity is done.
         status: Optional[:class:`.Status`]
             Indicates what status to change to. If ``None``, then
@@ -878,7 +947,8 @@ class Client:
             if me is None:
                 continue
 
-            me.activities = (activity,)
+            if activity is not None:
+                me.activities = (activity,)
             me.status = status_enum
 
     # Guild stuff
@@ -945,7 +1015,7 @@ class Client:
 
         .. note::
 
-            Using this, you will **not** receive :attr:`.Guild.channels`, :class:`.Guild.members`,
+            Using this, you will **not** receive :attr:`.Guild.channels`, :attr:`.Guild.members`,
             :attr:`.Member.activity` and :attr:`.Member.voice` per :class:`.Member`.
 
         .. note::
@@ -1166,7 +1236,11 @@ class Client:
     async def fetch_user_profile(self, user_id):
         """|coro|
 
-        Gets an arbitrary user's profile. This can only be used by non-bot accounts.
+        Gets an arbitrary user's profile.
+
+        .. note::
+
+            This can only be used by non-bot accounts.
 
         Parameters
         ------------
@@ -1210,7 +1284,7 @@ class Client:
 
             This method is an API call. For general usage, consider :meth:`get_channel` instead.
 
-        .. versionadded:: 1.2.0
+        .. versionadded:: 1.2
 
         Raises
         -------

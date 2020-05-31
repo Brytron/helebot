@@ -3,7 +3,7 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-2019 Rapptz
+Copyright (c) 2015-2020 Rapptz
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -50,17 +50,22 @@ class VoiceState:
         Indicates if the user is currently muted by their own accord.
     self_deaf: :class:`bool`
         Indicates if the user is currently deafened by their own accord.
+    self_stream: :class:`bool`
+        Indicates if the user is currently streaming via 'Go Live' feature.
+
+        .. versionadded:: 1.3
+
     self_video: :class:`bool`
         Indicates if the user is currently broadcasting video.
     afk: :class:`bool`
         Indicates if the user is currently in the AFK channel in the guild.
-    channel: :class:`VoiceChannel`
+    channel: Optional[:class:`VoiceChannel`]
         The voice channel that the user is currently connected to. None if the user
         is not currently in a voice channel.
     """
 
     __slots__ = ('session_id', 'deaf', 'mute', 'self_mute',
-                 'self_video', 'self_deaf', 'afk', 'channel')
+                 'self_stream', 'self_video', 'self_deaf', 'afk', 'channel')
 
     def __init__(self, *, data, channel=None):
         self.session_id = data.get('session_id')
@@ -69,6 +74,7 @@ class VoiceState:
     def _update(self, data, channel):
         self.self_mute = data.get('self_mute', False)
         self.self_deaf = data.get('self_deaf', False)
+        self.self_stream = data.get('self_stream', False)
         self.self_video = data.get('self_video', False)
         self.afk = data.get('suppress', False)
         self.mute = data.get('mute', False)
@@ -76,7 +82,7 @@ class VoiceState:
         self.channel = channel
 
     def __repr__(self):
-        return '<VoiceState self_mute={0.self_mute} self_deaf={0.self_deaf} self_video={0.self_video} channel={0.channel!r}>'.format(self)
+        return '<VoiceState self_mute={0.self_mute} self_deaf={0.self_deaf} self_stream={0.self_stream} channel={0.channel!r}>'.format(self)
 
 def flatten_user(cls):
     for attr, value in itertools.chain(BaseUser.__dict__.items(), User.__dict__.items()):
@@ -144,7 +150,7 @@ class Member(discord.abc.Messageable, _BaseUser):
     joined_at: Optional[:class:`datetime.datetime`]
         A datetime object that specifies the date and time in UTC that the member joined the guild for
         the first time. In certain cases, this can be ``None``.
-    activities: Tuple[Union[:class:`Game`, :class:`Streaming`, :class:`Spotify`, :class:`Activity`]]
+    activities: Tuple[Union[:class:`BaseActivity`, :class:`Spotify`]]
         The activities that the user is currently doing.
     guild: :class:`Guild`
         The guild that the member belongs to.
@@ -155,7 +161,8 @@ class Member(discord.abc.Messageable, _BaseUser):
         Nitro boost on the guild, if available. This could be ``None``.
     """
 
-    __slots__ = ('_roles', 'joined_at', 'premium_since', '_client_status', 'activities', 'guild', 'nick', '_user', '_state')
+    __slots__ = ('_roles', '_cs_roles', 'joined_at', 'premium_since', '_client_status',
+                 'activities', 'guild', 'nick', '_user', '_state')
 
     def __init__(self, *, data, guild, state):
         self._state = state
@@ -189,12 +196,19 @@ class Member(discord.abc.Messageable, _BaseUser):
     @classmethod
     def _from_message(cls, *, message, data):
         author = message.author
-        data['user'] = {
-            attr: getattr(author, attr)
-            for attr in author.__slots__
-            if attr[0] != '_'
-        }
+        data['user'] = author._to_minimal_user_json()
         return cls(data=data, guild=message.guild, state=message._state)
+
+    @classmethod
+    def _try_upgrade(cls, *,  data, guild, state):
+        # A User object with a 'member' key
+        try:
+            member_data = data.pop('member')
+        except KeyError:
+            return state.store_user(data)
+        else:
+            member_data['user'] = data
+            return cls(data=member_data, guild=guild, state=state)
 
     @classmethod
     def _from_presence_update(cls, *, data, guild, state):
@@ -220,6 +234,11 @@ class Member(discord.abc.Messageable, _BaseUser):
         self.activities = member.activities
         self._state = member._state
 
+        try:
+            del self._cs_roles
+        except AttributeError:
+            pass
+
         # Reference will not be copied unless necessary by PRESENCE_UPDATE
         # See below
         self._user = member._user
@@ -231,6 +250,10 @@ class Member(discord.abc.Messageable, _BaseUser):
 
     def _update_roles(self, data):
         self._roles = utils.SnowflakeList(map(int, data['roles']))
+        try:
+            del self._cs_roles
+        except AttributeError:
+            pass
 
     def _update(self, data):
         # the nickname change is optional,
@@ -321,7 +344,7 @@ class Member(discord.abc.Messageable, _BaseUser):
         """
         return self.colour
 
-    @property
+    @utils.cached_slot_property('_cs_roles')
     def roles(self):
         """List[:class:`Role`]: A :class:`list` of :class:`Role` that the member belongs to. Note
         that the first element of this list is always the default '@everyone'
@@ -358,7 +381,7 @@ class Member(discord.abc.Messageable, _BaseUser):
 
     @property
     def activity(self):
-        """Union[:class:`Game`, :class:`Streaming`, :class:`Spotify`, :class:`Activity`]: Returns the primary
+        """Union[:class:`BaseActivity`, :class:`Spotify`]: Returns the primary
         activity the user is currently doing. Could be None if no activity is being done.
 
         .. note::
@@ -376,12 +399,14 @@ class Member(discord.abc.Messageable, _BaseUser):
         message: :class:`Message`
             The message to check if you're mentioned in.
         """
+        if message.guild is None or message.guild.id != self.guild.id:
+            return False
+
         if self._user.mentioned_in(message):
             return True
 
         for role in message.role_mentions:
-            has_role = utils.get(self.roles, id=role.id) is not None
-            if has_role:
+            if self._roles.has(role.id):
                 return True
 
         return False
@@ -425,7 +450,7 @@ class Member(discord.abc.Messageable, _BaseUser):
         administrator implication.
         """
 
-        if self.guild.owner == self:
+        if self.guild.owner_id == self.id:
             return Permissions.all()
 
         base = Permissions.none()
@@ -486,7 +511,7 @@ class Member(discord.abc.Messageable, _BaseUser):
 
         All parameters are optional.
 
-        .. versionchanged:: 1.1.0
+        .. versionchanged:: 1.1
             Can now pass ``None`` to ``voice_channel`` to kick a member from voice.
 
         Parameters
@@ -564,7 +589,7 @@ class Member(discord.abc.Messageable, _BaseUser):
 
         This raises the same exceptions as :meth:`edit`.
 
-        .. versionchanged:: 1.1.0
+        .. versionchanged:: 1.1
             Can now pass ``None`` to kick a member from voice.
 
         Parameters

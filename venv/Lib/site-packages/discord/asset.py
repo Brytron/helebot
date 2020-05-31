@@ -3,7 +3,7 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-2019 Rapptz
+Copyright (c) 2015-2020 Rapptz
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -63,6 +63,8 @@ class Asset:
     """
     __slots__ = ('_state', '_url')
 
+    BASE = 'https://cdn.discordapp.com'
+
     def __init__(self, state, url=None):
         self._state = state
         self._url = url
@@ -84,14 +86,22 @@ class Asset:
         if format is None:
             format = 'gif' if user.is_avatar_animated() else static_format
 
-        return cls(state, 'https://cdn.discordapp.com/avatars/{0.id}/{0.avatar}.{1}?size={2}'.format(user, format, size))
+        return cls(state, '/avatars/{0.id}/{0.avatar}.{1}?size={2}'.format(user, format, size))
 
     @classmethod
     def _from_icon(cls, state, object, path):
         if object.icon is None:
             return cls(state)
 
-        url = 'https://cdn.discordapp.com/{0}-icons/{1.id}/{1.icon}.jpg'.format(path, object)
+        url = '/{0}-icons/{1.id}/{1.icon}.jpg'.format(path, object)
+        return cls(state, url)
+
+    @classmethod
+    def _from_cover_image(cls, state, obj):
+        if obj.cover_image is None:
+            return cls(state)
+
+        url = '/app-assets/{0.id}/store/{0.cover_image}.jpg'.format(obj)
         return cls(state, url)
 
     @classmethod
@@ -104,7 +114,7 @@ class Asset:
         if hash is None:
             return cls(state)
 
-        url = 'https://cdn.discordapp.com/{key}/{0}/{1}.{2}?size={3}'
+        url = '/{key}/{0}/{1}.{2}?size={3}'
         return cls(state, url.format(id, hash, format, size, key=key))
 
     @classmethod
@@ -124,15 +134,15 @@ class Asset:
         if format is None:
             format = 'gif' if guild.is_icon_animated() else static_format
 
-        return cls(state, 'https://cdn.discordapp.com/icons/{0.id}/{0.icon}.{1}?size={2}'.format(guild, format, size))
+        return cls(state, '/icons/{0.id}/{0.icon}.{1}?size={2}'.format(guild, format, size))
 
 
     def __str__(self):
-        return self._url if self._url is not None else ''
+        return self.BASE + self._url if self._url is not None else ''
 
     def __len__(self):
         if self._url:
-            return len(self._url)
+            return len(self.BASE + self._url)
         return 0
 
     def __bool__(self):
@@ -161,14 +171,7 @@ class Asset:
             and a URL won't be present if a custom image isn't associated with
             the asset, e.g. a guild with no custom icon.
 
-        .. versionadded:: 1.1.0
-
-        Parameters
-        -----------
-        fp: Union[:class:`io.BufferedIOBase`, :class:`os.PathLike`]
-            Same as in :meth:`Attachment.save`.
-        seek_begin: :class:`bool`
-            Same as in :meth:`Attachment.save`.
+        .. versionadded:: 1.1
 
         Raises
         ------
@@ -190,7 +193,7 @@ class Asset:
         if self._state is None:
             raise DiscordException('Invalid state (no ConnectionState provided)')
 
-        return await self._state.http.get_from_cdn(self._url)
+        return await self._state.http.get_from_cdn(self.BASE + self._url)
 
     async def save(self, fp, *, seek_begin=True):
         """|coro|
@@ -206,7 +209,12 @@ class Asset:
 
         Raises
         ------
-        Same as :meth:`read`.
+        DiscordException
+            There was no valid URL or internal connection state.
+        HTTPException
+            Downloading the asset failed.
+        NotFound
+            The asset was deleted.
 
         Returns
         --------
