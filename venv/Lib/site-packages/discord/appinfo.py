@@ -3,7 +3,7 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-2019 Rapptz
+Copyright (c) 2015-2020 Rapptz
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -24,8 +24,10 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
+from . import utils
 from .user import User
 from .asset import Asset
+from .team import Team
 
 
 class AppInfo:
@@ -40,6 +42,11 @@ class AppInfo:
         The application name.
     owner: :class:`User`
         The application owner.
+    team: Optional[:class:`Team`]
+        The application's team.
+
+        .. versionadded:: 1.3
+
     icon: Optional[:class:`str`]
         The icon hash, if it exists.
     description: Optional[:class:`str`]
@@ -52,9 +59,45 @@ class AppInfo:
         grant flow to join.
     rpc_origins: Optional[List[:class:`str`]]
         A list of RPC origin URLs, if RPC is enabled.
+    summary: :class:`str`
+        If this application is a game sold on Discord,
+        this field will be the summary field for the store page of its primary SKU
+
+        .. versionadded:: 1.3
+
+    verify_key: :class:`str`
+        The base64 encoded key for the GameSDK's GetTicket
+
+        .. versionadded:: 1.3
+
+    guild_id: Optional[:class:`int`]
+        If this application is a game sold on Discord,
+        this field will be the guild to which it has been linked
+
+        .. versionadded:: 1.3
+
+    primary_sku_id: Optional[:class:`int`]
+        If this application is a game sold on Discord,
+        this field will be the id of the "Game SKU" that is created, if exists
+
+        .. versionadded:: 1.3
+
+    slug: Optional[:class:`str`]
+        If this application is a game sold on Discord,
+        this field will be the URL slug that links to the store page
+
+        .. versionadded:: 1.3
+
+    cover_image: Optional[:class:`str`]
+        If this application is a game sold on Discord,
+        this field will be the hash of the image on store embeds
+
+        .. versionadded:: 1.3
     """
     __slots__ = ('_state', 'description', 'id', 'name', 'rpc_origins',
-                 'bot_public', 'bot_require_code_grant', 'owner', 'icon')
+                 'bot_public', 'bot_require_code_grant', 'owner', 'icon',
+                 'summary', 'verify_key', 'team', 'guild_id', 'primary_sku_id',
+                  'slug', 'cover_image')
 
     def __init__(self, state, data):
         self._state = state
@@ -68,11 +111,43 @@ class AppInfo:
         self.bot_require_code_grant = data['bot_require_code_grant']
         self.owner = User(state=self._state, data=data['owner'])
 
+        team = data.get('team')
+        self.team = Team(state, team) if team else None
+
+        self.summary = data['summary']
+        self.verify_key = data['verify_key']
+
+        self.guild_id = utils._get_as_snowflake(data, 'guild_id')
+
+        self.primary_sku_id = utils._get_as_snowflake(data, 'primary_sku_id')
+        self.slug = data.get('slug')
+        self.cover_image = data.get('cover_image')
+
     def __repr__(self):
         return '<{0.__class__.__name__} id={0.id} name={0.name!r} description={0.description!r} public={0.bot_public} ' \
                'owner={0.owner!r}>'.format(self)
 
     @property
     def icon_url(self):
-        """:class:`.Asset`: Retrieves the application's icon asset."""
+        """:class:`.Asset`: Retrieves the application's icon asset.
+
+        .. versionadded:: 1.3
+        """
         return Asset._from_icon(self._state, self, 'app')
+
+    @property
+    def cover_image_url(self):
+        """:class:`.Asset`: Retrieves the cover image on a store embed.
+
+        .. versionadded:: 1.3
+        """
+        return Asset._from_cover_image(self._state, self)
+
+    @property
+    def guild(self):
+        """Optional[:class:`Guild`]: If this application is a game sold on Discord,
+        this field will be the guild to which it has been linked
+
+        .. versionadded:: 1.3
+        """
+        return self._state._get_guild(int(self.guild_id))

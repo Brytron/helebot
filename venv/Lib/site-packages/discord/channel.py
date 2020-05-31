@@ -3,7 +3,7 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-2019 Rapptz
+Copyright (c) 2015-2020 Rapptz
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -33,7 +33,7 @@ from .enums import ChannelType, try_enum
 from .mixins import Hashable
 from . import utils
 from .asset import Asset
-from .errors import ClientException, NoMoreItems
+from .errors import ClientException, NoMoreItems, InvalidArgument
 from .webhook import Webhook
 
 __all__ = (
@@ -79,8 +79,8 @@ class TextChannel(discord.abc.Messageable, discord.abc.GuildChannel, Hashable):
         The guild the channel belongs to.
     id: :class:`int`
         The channel ID.
-    category_id: :class:`int`
-        The category channel ID this channel belongs to.
+    category_id: Optional[:class:`int`]
+        The category channel ID this channel belongs to, if applicable.
     topic: Optional[:class:`str`]
         The channel's topic. None if it doesn't exist.
     position: :class:`int`
@@ -194,6 +194,9 @@ class TextChannel(discord.abc.Messageable, discord.abc.GuildChannel, Hashable):
         You must have the :attr:`~Permissions.manage_channels` permission to
         use this.
 
+        .. versionchanged:: 1.3
+            The ``overwrites`` keyword-only parameter was added.
+
         Parameters
         ----------
         name: :class:`str`
@@ -215,11 +218,15 @@ class TextChannel(discord.abc.Messageable, discord.abc.GuildChannel, Hashable):
             A value of `0` disables slowmode. The maximum value possible is `21600`.
         reason: Optional[:class:`str`]
             The reason for editing this channel. Shows up on the audit log.
+        overwrites: :class:`dict`
+            A :class:`dict` of target (either a role or a member) to
+            :class:`PermissionOverwrite` to apply to the channel.
 
         Raises
         ------
         InvalidArgument
-            If position is less than 0 or greater than the number of channels.
+            If position is less than 0 or greater than the number of channels, or if
+            the permission overwrite information is not in proper form.
         Forbidden
             You do not have permissions to edit the channel.
         HTTPException
@@ -266,6 +273,8 @@ class TextChannel(discord.abc.Messageable, discord.abc.GuildChannel, Hashable):
         Forbidden
             You do not have proper permissions to delete the messages or
             you're not using a bot account.
+        NotFound
+            If single delete, then the message was already deleted.
         HTTPException
             Deleting the messages failed.
         """
@@ -329,7 +338,7 @@ class TextChannel(discord.abc.Messageable, discord.abc.GuildChannel, Hashable):
             Same as ``around`` in :meth:`history`.
         oldest_first: Optional[:class:`bool`]
             Same as ``oldest_first`` in :meth:`history`.
-        bulk: class:`bool`
+        bulk: :class:`bool`
             If ``True``, use bulk delete. Setting this to ``False`` is useful for mass-deleting
             a bot's own messages without :attr:`Permissions.manage_messages`. When ``True``, will
             fall back to single delete if current account is a user bot, or if messages are
@@ -423,7 +432,7 @@ class TextChannel(discord.abc.Messageable, discord.abc.GuildChannel, Hashable):
 
         Requires :attr:`~.Permissions.manage_webhooks` permissions.
 
-        .. versionchanged:: 1.1.0
+        .. versionchanged:: 1.1
             Added the ``reason`` keyword-only parameter.
 
         Parameters
@@ -455,6 +464,46 @@ class TextChannel(discord.abc.Messageable, discord.abc.GuildChannel, Hashable):
         data = await self._state.http.create_webhook(self.id, name=str(name), avatar=avatar, reason=reason)
         return Webhook.from_state(data, state=self._state)
 
+    async def follow(self, *, destination):
+        """
+        Follows a channel using a webhook.
+
+        Only news channels can be followed.
+
+        .. note::
+
+            The webhook returned will not provide a token to do webhook
+            actions, as Discord does not provide it.
+
+        .. versionadded:: 1.3
+
+        Parameters
+        -----------
+        destination: :class:`TextChannel`
+            The channel you would like to follow from.
+
+        Raises
+        -------
+        HTTPException
+            Following the channel failed.
+        Forbidden
+            You do not have the permissions to create a webhook.
+
+        Returns
+        --------
+        :class:`Webhook`
+            The created webhook.
+        """
+
+        if not self.is_news():
+            raise ClientException('The channel must be a news channel.')
+
+        if not isinstance(destination, TextChannel):
+            raise InvalidArgument('Expected TextChannel received {0.__name__}'.format(type(destination)))
+
+        data = await self._state.http.follow_webhook(self.id, webhook_channel_id=destination.id)
+        return Webhook._as_follower(data, channel=destination, user=self._state.user)
+
 class VoiceChannel(discord.abc.Connectable, discord.abc.GuildChannel, Hashable):
     """Represents a Discord guild voice channel.
 
@@ -484,8 +533,8 @@ class VoiceChannel(discord.abc.Connectable, discord.abc.GuildChannel, Hashable):
         The guild the channel belongs to.
     id: :class:`int`
         The channel ID.
-    category_id: :class:`int`
-        The category channel ID this channel belongs to.
+    category_id: Optional[:class:`int`]
+        The category channel ID this channel belongs to, if applicable.
     position: :class:`int`
         The position in the channel list. This is a number that starts at 0. e.g. the
         top channel is position 0.
@@ -549,6 +598,24 @@ class VoiceChannel(discord.abc.Connectable, discord.abc.GuildChannel, Hashable):
                     ret.append(member)
         return ret
 
+    @property
+    def voice_states(self):
+        """Returns a mapping of member IDs who have voice states in this channel.
+
+        .. versionadded:: 1.3
+
+        .. note::
+
+            This function is intentionally low level to replace :attr:`members`
+            when the member cache is unavailable.
+
+        Returns
+        --------
+        Mapping[:class:`int`, :class:`VoiceState`]
+            The mapping of member ID to a voice state.
+        """
+        return {key: value for key, value in self.guild._voice_states.items() if value.channel.id == self.id}
+
     def permissions_for(self, member):
         base = super().permissions_for(member)
 
@@ -578,6 +645,9 @@ class VoiceChannel(discord.abc.Connectable, discord.abc.GuildChannel, Hashable):
         You must have the :attr:`~Permissions.manage_channels` permission to
         use this.
 
+        .. versionchanged:: 1.3
+            The ``overwrites`` keyword-only parameter was added.
+
         Parameters
         ----------
         name: :class:`str`
@@ -596,9 +666,14 @@ class VoiceChannel(discord.abc.Connectable, discord.abc.GuildChannel, Hashable):
             category.
         reason: Optional[:class:`str`]
             The reason for editing this channel. Shows up on the audit log.
+        overwrites: :class:`dict`
+            A :class:`dict` of target (either a role or a member) to
+            :class:`PermissionOverwrite` to apply to the channel.
 
         Raises
         ------
+        InvalidArgument
+            If the permission overwrite information is not in proper form.
         Forbidden
             You do not have permissions to edit the channel.
         HTTPException
@@ -689,6 +764,9 @@ class CategoryChannel(discord.abc.GuildChannel, Hashable):
         You must have the :attr:`~Permissions.manage_channels` permission to
         use this.
 
+        .. versionchanged:: 1.3
+            The ``overwrites`` keyword-only parameter was added.
+
         Parameters
         ----------
         name: :class:`str`
@@ -699,6 +777,9 @@ class CategoryChannel(discord.abc.GuildChannel, Hashable):
             To mark the category as NSFW or not.
         reason: Optional[:class:`str`]
             The reason for editing this category. Shows up on the audit log.
+        overwrites: :class:`dict`
+            A :class:`dict` of target (either a role or a member) to
+            :class:`PermissionOverwrite` to apply to the channel.
 
         Raises
         ------
@@ -875,11 +956,17 @@ class StoreChannel(discord.abc.GuildChannel, Hashable):
             category.
         reason: Optional[:class:`str`]
             The reason for editing this channel. Shows up on the audit log.
+        overwrites: :class:`dict`
+            A :class:`dict` of target (either a role or a member) to
+            :class:`PermissionOverwrite` to apply to the channel.
+
+            .. versionadded:: 1.3
 
         Raises
         ------
         InvalidArgument
-            If position is less than 0 or greater than the number of channels.
+            If position is less than 0 or greater than the number of channels, or if
+            the permission overwrite information is not in proper form.
         Forbidden
             You do not have permissions to edit the channel.
         HTTPException

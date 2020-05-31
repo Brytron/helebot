@@ -3,7 +3,7 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-2019 Rapptz
+Copyright (c) 2015-2020 Rapptz
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -73,9 +73,9 @@ class Paginator:
 
     Attributes
     -----------
-    prefix: Optional[:class:`str`]
+    prefix: :class:`str`
         The prefix inserted to every page. e.g. three backticks.
-    suffix: Optional[:class:`str`]
+    suffix: :class:`str`
         The suffix appended at the end of every page. e.g. three backticks.
     max_size: :class:`int`
         The maximum amount of codepoints allowed in a page.
@@ -83,7 +83,7 @@ class Paginator:
     def __init__(self, prefix='```', suffix='```', max_size=2000):
         self.prefix = prefix
         self.suffix = suffix
-        self.max_size = max_size - (0 if suffix is None else len(suffix))
+        self.max_size = max_size
         self.clear()
 
     def clear(self):
@@ -99,6 +99,10 @@ class Paginator:
     @property
     def _prefix_len(self):
         return len(self.prefix) if self.prefix else 0
+
+    @property
+    def _suffix_len(self):
+        return len(self.suffix) if self.suffix else 0
 
     def add_line(self, line='', *, empty=False):
         """Adds a line to the current page.
@@ -118,11 +122,11 @@ class Paginator:
         RuntimeError
             The line was too big for the current :attr:`max_size`.
         """
-        max_page_size = self.max_size - self._prefix_len - 2
+        max_page_size = self.max_size - self._prefix_len - self._suffix_len - 2
         if len(line) > max_page_size:
             raise RuntimeError('Line exceeds maximum page size %s' % (max_page_size))
 
-        if self._count + len(line) + 1 > self.max_size:
+        if self._count + len(line) + 1 > self.max_size - self._suffix_len:
             self.close_page()
 
         self._count += len(line) + 1
@@ -153,7 +157,7 @@ class Paginator:
     def pages(self):
         """Returns the rendered list of pages."""
         # we have more than just the prefix in our current page
-        if len(self._current_page) > 1:
+        if len(self._current_page) > (0 if self.prefix is None else 1):
             self.close_page()
         return self._pages
 
@@ -340,7 +344,8 @@ class HelpCommand:
         # consider this to be an *incredibly* strange use case. I'd rather go
         # for this common use case rather than waste performance for the
         # odd one.
-        return self.context.prefix.replace(user.mention, '@' + user.display_name)
+        pattern = re.compile(r"<@!?%s>" % user.id)
+        return pattern.sub("@%s" % user.display_name, self.context.prefix)
 
     @property
     def invoked_with(self):
@@ -836,7 +841,7 @@ class DefaultHelpCommand(HelpCommand):
         The number of characters the paginator must accumulate before getting DM'd to the
         user if :attr:`dm_help` is set to ``None``. Defaults to 1000.
     indent: :class:`int`
-        How much to intend the commands from a heading. Defaults to ``2``.
+        How much to indent the commands from a heading. Defaults to ``2``.
     commands_heading: :class:`str`
         The command list's heading string used when the help command is invoked with a category name.
         Useful for i18n. Defaults to ``"Commands:"``

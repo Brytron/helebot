@@ -3,7 +3,7 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-2019 Rapptz
+Copyright (c) 2015-2020 Rapptz
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -132,7 +132,7 @@ class ReactionIterator(_AsyncIterator):
         self.emoji = emoji
         self.guild = message.guild
         self.channel_id = message.channel.id
-        self.users = asyncio.Queue(loop=state.loop)
+        self.users = asyncio.Queue()
 
     async def next(self):
         if self.users.empty():
@@ -228,7 +228,7 @@ class HistoryIterator(_AsyncIterator):
 
         self.state = self.messageable._state
         self.logs_from = self.state.http.logs_from
-        self.messages = asyncio.Queue(loop=self.state.loop)
+        self.messages = asyncio.Queue()
 
         if self.around:
             if self.limit is None:
@@ -378,7 +378,7 @@ class AuditLogIterator(_AsyncIterator):
 
         self._filter = None  # entry dict -> bool
 
-        self.entries = asyncio.Queue(loop=self.loop)
+        self.entries = asyncio.Queue()
 
 
         if self.reverse:
@@ -503,7 +503,7 @@ class GuildIterator(_AsyncIterator):
 
         self.state = self.bot._connection
         self.get_guilds = self.bot.http.get_guilds
-        self.guilds = asyncio.Queue(loop=self.state.loop)
+        self.guilds = asyncio.Queue()
 
         if self.before and self.after:
             self._retrieve_guilds = self._retrieve_guilds_before_strategy
@@ -587,3 +587,58 @@ class GuildIterator(_AsyncIterator):
                 self.limit -= retrieve
             self.after = Object(id=int(data[0]['id']))
         return data
+
+class MemberIterator(_AsyncIterator):
+    def __init__(self, guild, limit=1000, after=None):
+
+        if isinstance(after, datetime.datetime):
+            after = Object(id=time_snowflake(after, high=True))
+
+        self.guild = guild
+        self.limit = limit
+        self.after = after or OLDEST_OBJECT
+
+        self.state = self.guild._state
+        self.get_members = self.state.http.get_members
+        self.members = asyncio.Queue()
+
+    async def next(self):
+        if self.members.empty():
+            await self.fill_members()
+
+        try:
+            return self.members.get_nowait()
+        except asyncio.QueueEmpty:
+            raise NoMoreItems()
+
+    def _get_retrieve(self):
+        l = self.limit
+        if l is None:
+            r = 1000
+        elif l <= 1000:
+            r = l
+        else:
+            r = 1000
+
+        self.retrieve = r
+        return r > 0
+
+    async def fill_members(self):
+        if self._get_retrieve():
+            after = self.after.id if self.after else None
+            data = await self.get_members(self.guild.id, self.retrieve, after)
+            if not data:
+                # no data, terminate
+                return
+
+            if len(data) < 1000:
+                self.limit = 0 # terminate loop
+
+            self.after = Object(id=int(data[-1]['user']['id']))
+
+            for element in reversed(data):
+                await self.members.put(self.create_member(element))
+
+    def create_member(self, data):
+        from .member import Member
+        return Member(data=data, guild=self.guild, state=self.state)

@@ -3,7 +3,7 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-2019 Rapptz
+Copyright (c) 2015-2020 Rapptz
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -37,6 +37,8 @@ log = logging.getLogger(__name__)
 c_int_ptr = ctypes.POINTER(ctypes.c_int)
 c_int16_ptr = ctypes.POINTER(ctypes.c_int16)
 c_float_ptr = ctypes.POINTER(ctypes.c_float)
+
+_lib = None
 
 class EncoderStruct(ctypes.Structure):
     pass
@@ -100,25 +102,29 @@ def libopus_loader(name):
 
     return lib
 
-try:
-    if sys.platform == 'win32':
-        _basedir = os.path.dirname(os.path.abspath(__file__))
-        _bitness = 'x64' if sys.maxsize > 2**32 else 'x86'
-        _filename = os.path.join(_basedir, 'bin', 'libopus-0.{}.dll'.format(_bitness))
-        _lib = libopus_loader(_filename)
-    else:
-        _lib = libopus_loader(ctypes.util.find_library('opus'))
-except Exception:
-    _lib = None
+def _load_default():
+    global _lib
+    try:
+        if sys.platform == 'win32':
+            _basedir = os.path.dirname(os.path.abspath(__file__))
+            _bitness = 'x64' if sys.maxsize > 2**32 else 'x86'
+            _filename = os.path.join(_basedir, 'bin', 'libopus-0.{}.dll'.format(_bitness))
+            _lib = libopus_loader(_filename)
+        else:
+            _lib = libopus_loader(ctypes.util.find_library('opus'))
+    except Exception:
+        _lib = None
+
+    return _lib is not None
 
 def load_opus(name):
     """Loads the libopus shared library for use with voice.
 
     If this function is not called then the library uses the function
-    :func:`ctypes.util.find_library` and then loads that one
-    if available.
+    :func:`ctypes.util.find_library` and then loads that one if available.
 
-    Not loading a library leads to voice not working.
+    Not loading a library and attempting to use PCM based AudioSources will
+    lead to voice not working.
 
     This function propagates the exceptions thrown.
 
@@ -221,7 +227,8 @@ class Encoder:
         self.application = application
 
         if not is_loaded():
-            raise OpusNotLoaded()
+            if not _load_default():
+                raise OpusNotLoaded()
 
         self._state = self._create_state()
         self.set_bitrate(128)
