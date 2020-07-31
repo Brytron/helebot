@@ -27,7 +27,7 @@ bot = commands.Bot(command_prefix='*', description=description)
 #initialize calendar
 cal_service = initial_cal()
 drive_service = initial_drive()
-current_season = "S10"
+current_season = "S11"
 
 pic_path = "wheresRyan_photos/"
 Ryan = "Congohunter"
@@ -434,6 +434,14 @@ async def trials(ctx, player, week=None, season=current_season, console="steam",
     else:
         ctx.send("file type is not supported")
 
+@bot.command()
+async def D2register(ctx,title,steamid):
+    """connects any user definted title to a steamID"""
+    output = await register(title, steamid)
+    if output == 1:
+        await ctx.send("registration success")
+    else:
+        await ctx.send("registration failed")
 
 
 @bot.command()

@@ -1,6 +1,8 @@
 import aiohttp
 import asyncio
 import random
+import pickle
+import os.path
 
 from Cache import CharCache
 from operator import itemgetter
@@ -16,6 +18,7 @@ class D2Profile:
     object that contains a users user_id, character_ids, and console_stats
     """
     def __init__(self):
+        self.title = None
         self.user_id = None
         self.char_ids = None
         self.console = None
@@ -26,19 +29,35 @@ baseurl = 'https://bungie.net/Platform/Destiny2/'
 baseurl_groupv2 = 'https://bungie.net/Platform/GroupV2/'
 
 my_api_key = '251bdc1107ac4b4e8713b3fd0aea1257'
-my_headers = my_headers = {"X-API-Key": my_api_key}
-membership_types = {'xbox': '1',  'xbone': '1', 'psn': '2', 'pc': '4', 'ps4': '2', 'all': '-1', 'steam': '3'}
+my_headers = {"X-API-Key": my_api_key}
+membership_types = {'xbox': '1',  'xbone': '1', 'psn': '2', 'steam': '3', 'ps4': '2', 'all': '-1', 'blizzard': '4',
+                    'demon': '10', 'next': '254', 'stadia': '5'}
 seasons = \
     {'S7': ["2019-06-04T17:00:00Z", "2019-10-01T17:00:00Z"], 'S6': ["2019-03-05T17:00:00Z", "2019-06-04T17:00:00Z"],
      'S8': ["2019-10-01T17:00:00Z", "2019-12-010T17:00:00Z"], 'S9': ["2019-12-10T17:00:00Z", "2020-03-09T17:00:00Z"],
-     'S10': ["2020-03-09T17:00:00Z", "2020-06-09T17:00:00Z"]}
-current_season = 'S9'
+     'S10': ["2020-03-09T17:00:00Z", "2020-06-09T17:00:00Z"],'S11': ["2020-06-09T17:00:00Z", "2020-11-10T17:00:00Z"],
+     'S12': ["2020-11-10T17:00:00Z", "2021-3-10T17:00:00Z"]}
+current_season = 'S11'
 game_types = { 74:'Control', 72:'Clash', 37:'Survival', 38:'Countdown'}
 trials_game_type = {84:'Elimination'}
 
-D2Profiles = CharCache()
+#D2Profiles = CharCache()
 D2Stats = CharCache()
 
+
+def load_profiles():
+    """returns  in d2 character profiles from a pickled file"""
+    Profiles = None
+    if os.path.exists('d2CharCache.pickle'):
+        with open('d2CharCache.pickle', 'rb') as Char_file:
+            Profiles = pickle.load(Char_file)
+    if not Profiles:
+        Profiles = CharCache()
+        with open('d2CharCache.pickle', 'wb') as char_file:
+            pickle.dump(Profiles, char_file)
+    return Profiles
+
+D2Profiles = load_profiles()
 
 async def fetch(session, url):
     async with session.request('GET',url,headers=my_headers) as response:
@@ -55,25 +74,27 @@ async def get_characters(session, membership_id, console):
     url = bung_url + f"/Destiny2/{membershipType}/Profile/{destinyMembershipId}/?components=100"
 
     response = await fetch(session, url)
-
+    print(response)
     characters = response['Response']['profile']['data']['characterIds']
     return characters
 
 
 async def return_member_id(session, name, console):
     """returns user id from input string"""
-
-    membershipType = membership_types[console]
+    membershipType = membership_types["steam"]
+    #membershipType = membership_types[console]
 
     print(name)
     url = bung_url + f"/Destiny2/SearchDestinyPlayer/{membershipType}/{name}/"
     print(url)
     response = await fetch(session, url)
+    print(response)
     print(response['Response'][0]['membershipId'])
     return response['Response'][0]['membershipId']
 
 
 async def return_member_id_from_code(session, credential, console):
+
     membershipType = membership_types[console]
 
     crType = 'SteamId'
@@ -82,6 +103,31 @@ async def return_member_id_from_code(session, credential, console):
     response = await fetch(session, url)
 
     return response['Response']['membershipId']
+
+
+async def register(title, steamID):
+    """
+    connects a users name and steam id and create a profile for a user
+    """
+    async with aiohttp.ClientSession() as session:
+        console = "steam"
+        profile = D2Profile()
+        profile.user_id = await return_member_id_from_code(session, steamID, console)
+        profile.char_ids = await get_characters(session, profile.user_id, console)
+        profile.console = console
+        key = title + console
+        D2Profiles.update(key, profile)
+        with open('d2CharCache.pickle', 'wb') as char_file:
+            pickle.dump(D2Profiles, char_file)
+        print("registration complete")
+        if key in D2Profiles.cache:
+            print("registration success")
+            error = 1
+        else:
+            print("registration failure")
+            error = 0
+        return error
+
 
 async def find_profile(session, name, console):
     """
@@ -103,6 +149,8 @@ async def find_profile(session, name, console):
         profile.char_ids = await get_characters(session, profile.user_id, console)
         profile.console = console
         D2Profiles.update(key, profile)
+        with open('d2CharCache.pickle', 'wb') as char_file:
+            pickle.dump(D2Profiles, char_file)
         print("user added from Bungie API")
         return profile
 
@@ -472,9 +520,17 @@ async def fight_stats(player_1,player_2,console):
 
 
 async def example():
-    #await banner_stats("Brytron","all")
+    #test = await banner_stats("Brytron","steam",season="S11")
+
     async with aiohttp.ClientSession() as session:
-        await return_member_id_from_code(session, "76561198029971865", "steam")
+        membershipType = membership_types['stadia']
+        # membershipType = membership_types[console]
+        name = 'Bryton'
+        url = bung_url + f"/Destiny2/SearchDestinyPlayer/{membershipType}/{name}/"
+        print(url)
+        response = await fetch(session, url)
+        print(response)
+        print(response['Response'][0]['membershipId'])
 
 
 
