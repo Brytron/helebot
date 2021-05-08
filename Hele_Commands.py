@@ -27,7 +27,7 @@ bot = commands.Bot(command_prefix='*', description=description)
 #initialize calendar
 cal_service = initial_cal()
 drive_service = initial_drive()
-current_season = "S11"
+current_season = "S14"
 
 pic_path = "wheresRyan_photos/"
 Ryan = "Congohunter"
@@ -394,7 +394,7 @@ async def pong(ctx,target: discord.Member):
 async def comp(ctx,player,season=current_season, console="steam", file_type="sheets", tz="US/Pacific"):
     """builds a excel file(compatible with google sheets) of stats, and progression for a specified season of competitive for an individual destiny player
     Query: comp {player} {season} {console} Example: comp Brytron S6 pc sheets
-    only supports S6 and S7"""
+    only supports S6 and above"""
     new_list = await competitive_stats(player, console, season)
     file_name = pushto_excel_comp(new_list, season, player, tz)
     if file_type == "excel":
@@ -410,7 +410,7 @@ async def comp(ctx,player,season=current_season, console="steam", file_type="she
 async def banner(ctx, player, week=None, season=current_season, console="steam", file_type="sheets", tz="US/Pacific"):
     """builds a excel file(compatible with google sheets) of stats, and progression for a specified season or week of iron banner for an individual destiny player
     Example: banner Brytron 8/27/19 S6 pc sheets or banner Brytron#11867 skip S6, pc, excel
-    only supports S6 and S7"""
+    only supports S6 and above"""
     file_name = await banner_stats(player, console, season, week, tz)
     if file_type == "excel":
         await ctx.send(file=discord.File(file_name))
@@ -424,7 +424,7 @@ async def banner(ctx, player, week=None, season=current_season, console="steam",
 async def trials(ctx, player, week=None, season=current_season, console="steam", file_type="sheets", tz="US/Pacific"):
     """builds a excel file(compatible with google sheets) of stats, and progression for a specified season or week of trials for an individual destiny player
     Example: trials Brytron 8/27/19 S6 pc sheets or trials Brytron#11867 skip S6, pc, excel
-    only supports S6 and S7"""
+    only supports S6 and above"""
     file_name = await trials_stats(player, console, season, week, tz)
     if file_type == "excel":
         await ctx.send(file=discord.File(file_name))
