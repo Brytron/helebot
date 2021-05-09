@@ -3,7 +3,7 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-2020 Rapptz
+Copyright (c) 2015-present Rapptz
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -61,30 +61,32 @@ class AppInfo:
         A list of RPC origin URLs, if RPC is enabled.
     summary: :class:`str`
         If this application is a game sold on Discord,
-        this field will be the summary field for the store page of its primary SKU
+        this field will be the summary field for the store page of its primary SKU.
 
         .. versionadded:: 1.3
 
     verify_key: :class:`str`
-        The base64 encoded key for the GameSDK's GetTicket
+        The hex encoded key for verification in interactions and the
+        GameSDK's `GetTicket <https://discord.com/developers/docs/game-sdk/applications#getticket>`_.
 
         .. versionadded:: 1.3
 
     guild_id: Optional[:class:`int`]
         If this application is a game sold on Discord,
-        this field will be the guild to which it has been linked
+        this field will be the guild to which it has been linked to.
 
         .. versionadded:: 1.3
 
     primary_sku_id: Optional[:class:`int`]
         If this application is a game sold on Discord,
-        this field will be the id of the "Game SKU" that is created, if exists
+        this field will be the id of the "Game SKU" that is created,
+        if it exists.
 
         .. versionadded:: 1.3
 
     slug: Optional[:class:`str`]
         If this application is a game sold on Discord,
-        this field will be the URL slug that links to the store page
+        this field will be the URL slug that links to the store page.
 
         .. versionadded:: 1.3
 
@@ -131,17 +133,79 @@ class AppInfo:
     def icon_url(self):
         """:class:`.Asset`: Retrieves the application's icon asset.
 
+        This is equivalent to calling :meth:`icon_url_as` with
+        the default parameters ('webp' format and a size of 1024).
+
         .. versionadded:: 1.3
         """
-        return Asset._from_icon(self._state, self, 'app')
+        return self.icon_url_as()
+
+    def icon_url_as(self, *, format='webp', size=1024):
+        """Returns an :class:`Asset` for the icon the application has.
+
+        The format must be one of 'webp', 'jpeg', 'jpg' or 'png'.
+        The size must be a power of 2 between 16 and 4096.
+
+        .. versionadded:: 1.6
+
+        Parameters
+        -----------
+        format: :class:`str`
+            The format to attempt to convert the icon to. Defaults to 'webp'.
+        size: :class:`int`
+            The size of the image to display.
+
+        Raises
+        ------
+        InvalidArgument
+            Bad image format passed to ``format`` or invalid ``size``.
+
+        Returns
+        --------
+        :class:`Asset`
+            The resulting CDN asset.
+        """
+        return Asset._from_icon(self._state, self, 'app', format=format, size=size)
+
 
     @property
     def cover_image_url(self):
         """:class:`.Asset`: Retrieves the cover image on a store embed.
 
+        This is equivalent to calling :meth:`cover_image_url_as` with
+        the default parameters ('webp' format and a size of 1024).
+
         .. versionadded:: 1.3
         """
-        return Asset._from_cover_image(self._state, self)
+        return self.cover_image_url_as()
+
+    def cover_image_url_as(self, *, format='webp', size=1024):
+        """Returns an :class:`Asset` for the image on store embeds
+        if this application is a game sold on Discord.
+
+        The format must be one of 'webp', 'jpeg', 'jpg' or 'png'.
+        The size must be a power of 2 between 16 and 4096.
+
+        .. versionadded:: 1.6
+
+        Parameters
+        -----------
+        format: :class:`str`
+            The format to attempt to convert the image to. Defaults to 'webp'.
+        size: :class:`int`
+            The size of the image to display.
+
+        Raises
+        ------
+        InvalidArgument
+            Bad image format passed to ``format`` or invalid ``size``.
+
+        Returns
+        --------
+        :class:`Asset`
+            The resulting CDN asset.
+        """
+        return Asset._from_cover_image(self._state, self, format=format, size=size)
 
     @property
     def guild(self):
