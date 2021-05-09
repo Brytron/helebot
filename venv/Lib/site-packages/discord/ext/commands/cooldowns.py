@@ -3,7 +3,7 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2015-2020 Rapptz
+Copyright (c) 2015-present Rapptz
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -66,6 +66,9 @@ class BucketType(Enum):
             # recieving a DMChannel or GroupChannel which inherit from PrivateChannel and do
             return (msg.channel if isinstance(msg.channel, PrivateChannel) else msg.author.top_role).id
 
+    def __call__(self, msg):
+        return self.get_key(msg)
+
 
 class Cooldown:
     __slots__ = ('rate', 'per', 'type', '_window', '_tokens', '_last')
@@ -78,8 +81,8 @@ class Cooldown:
         self._tokens = self.rate
         self._last = 0.0
 
-        if not isinstance(self.type, BucketType):
-            raise TypeError('Cooldown type must be a BucketType')
+        if not callable(self.type):
+            raise TypeError('Cooldown type must be a BucketType or callable')
 
     def get_tokens(self, current=None):
         if not current:
@@ -90,6 +93,15 @@ class Cooldown:
         if current > self._window + self.per:
             tokens = self.rate
         return tokens
+
+    def get_retry_after(self, current=None):
+        current = current or time.time()
+        tokens = self.get_tokens(current)
+
+        if tokens == 0:
+            return self.per - (current - self._window)
+
+        return 0.0
 
     def update_rate_limit(self, current=None):
         current = current or time.time()
@@ -142,7 +154,7 @@ class CooldownMapping:
         return cls(Cooldown(rate, per, type))
 
     def _bucket_key(self, msg):
-        return self._cooldown.type.get_key(msg)
+        return self._cooldown.type(msg)
 
     def _verify_cache_integrity(self, current=None):
         # we want to delete all cache objects that haven't been used
