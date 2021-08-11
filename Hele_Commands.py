@@ -17,7 +17,7 @@ from discord.ext import commands
 with open("config.json", "r") as f:
     TOKEN = json.load(f)["Discord"]["APICode"]
 
-#version 0.14
+#version 0.3 (public)
 #
 #warnings:
 #playing sound files does not work natively on windows
