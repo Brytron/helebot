@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="70e8fb89-4fde-43dc-98a7-705efb28f0f4" name="Default Changelist" comment="" />
+    <list default="true" id="70e8fb89-4fde-43dc-98a7-705efb28f0f4" name="Default Changelist" comment="remove old problem history" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -28,6 +28,29 @@
       <option name="presentableId" value="Default" />
       <updated>1628685599809</updated>
     </task>
+    <task id="LOCAL-00001" summary="remove old problem history">
+      <created>1628686048189</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1628686048189</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="remove old problem history" />
+    <option name="LAST_COMMIT_MESSAGE" value="remove old problem history" />
   </component>
 </project>
