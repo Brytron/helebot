@@ -8,6 +8,8 @@ soundbites
 #ignore old code that will just cause confusion
 old code
 
+#IDE specific file
+.idea
 
 #for connecting to discord and bungie apis
 config.json
