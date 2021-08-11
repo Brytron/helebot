@@ -1,6 +1,7 @@
 import discord
 import random
 import os
+import pickle
 from selectimage import *
 from Destiny_connect import *
 from pathlib import Path
@@ -12,7 +13,10 @@ from dateutil import parser
 
 from discord.ext import commands
 
-TOKEN = 'Mzg4MTQyOTA1NjI3MjQ2NjEy.Xswoaw.0GCYsY8wohtKiAQ36HQ4QBP1TQQ'
+#read token
+with open("config.json", "r") as f:
+    TOKEN = json.load(f)["Discord"]["APICode"]
+
 #version 0.14
 #
 #warnings:
@@ -20,11 +24,10 @@ TOKEN = 'Mzg4MTQyOTA1NjI3MjQ2NjEy.Xswoaw.0GCYsY8wohtKiAQ36HQ4QBP1TQQ'
 #discord bot must be out of a voice channel to play another soundbite
 #
 # needs implementing:
-# change requests to asnc function
-# fix sound playback
 
 description = '''Helebot version 0.2'''
 bot = commands.Bot(command_prefix='*', description=description)
+
 #initialize calendar
 cal_service = initial_cal()
 drive_service = initial_drive()
@@ -37,19 +40,7 @@ Tyler = "LtDangle"
 cal_link = \
     "https://calendar.google.com/calendar?cid=ZGMybmZmbm43NjdiYmt1amdrbjAwOHVzb29AZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ"
 
-path_baby = "soundbites/"
 
-bs_playlist = (
-"BS_AgainAgain.mp3", "BS_BeerCigChips.mp3", "BS_did you wash it.mp3", "BS_COmedown.mp3", "BS_dont get it.mp3",
-"BS_dontlikethat.mp3", "BS_gonna kiss her.mp3", "BS_GOnna mary her.mp3", "BS_gottalove me.mp3", "BS_hotdonttouch.mp3",
-"BS_howcomenobodyslaughing.mp3", "BS_ice cream.mp3", "BS_Im not happy.mp3", "BS_imascream.mp3", "BS_KICKIT.mp3",
-"BS_kissthebabby.mp3", "BS_laugh.mp3", "BS_like you.mp3", "BS_loser.mp3", "BS_machinegun.mp3", "BS_nobed.mp3",
-"BS_notthemama.mp3", "BS_oh.mp3", "BS_ohh a fight.mp3", "BS_ok.mp3", "BS_playagame.mp3", "BS_present.mp3",
-"BS_puppets.mp3", "BS_readyornot.mp3", "Bs_she nice.mp3", "BS_shhlook.mp3", "BS_stayherewithyou.mp3",
-"BS_thatsdiscusting.mp3",
-"BS_The Monster gonna eat me.mp3", "BS_theyre yummy.mp3", "BS_want something good.mp3",
-"BS_whatifthey dont have it.mp3",
-"BS_yesmam.mp3", "BS_you dont look like us.mp3", "BS_youpromised.mp3", "BS_your chicken.mp3", "getaway getaway.mp3")
 
 
 @bot.event
@@ -81,7 +72,9 @@ async def joke(ctx):
 @bot.command()
 @commands.has_permissions(administrator=True)
 async def initial_cal(ctx):
-    """initializes the calendar for the server"""
+    """
+    initializes the calendar for the server
+    """
     channel = ctx
     # auto_message loop
     next_day = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(
@@ -130,113 +123,6 @@ async def initial_cal(ctx):
         next_day = next_day + datetime.timedelta(days=1)
         last_event_list = event_list
         update_day = datetime.datetime.now().weekday()
-
-
-@bot.command()
-async def add(ctx, left: int, right: int):
-    """Adds two numbers together."""
-    await ctx.send(left + right)
-
-
-@bot.command()
-async def flip(ctx):
-    """flips a coin"""
-    X = random.random()
-    if X > 0.5:
-        Y = 'Heads'
-    else:
-        Y = 'Tails'
-    await ctx.send(Y)
-
-
-@bot.command()
-async def baby(ctx):
-    """Plays a random soundbite from baby sinclair"""
-    user = ctx.message.author
-    print(user)
-    try:
-        voice_channel = user.voice.channel
-        print(voice_channel)
-        print("user is in ", voice_channel)
-    except:
-        await ctx.send("User not in voice channel")
-        return
-
-    try:
-        vc = await voice_channel.connect()
-        print("connecting to voice channel")
-        print(vc)
-    except:
-        print("voice channel already exists")
-
-    bite = path_baby + random.choice(bs_playlist)
-    try:
-        vc.play(discord.FFmpegPCMAudio(bite), after=lambda e: print('done', e))
-        print(bite," was played")
-    except:
-        print("playback error")
-    await asyncio.sleep(9)
-    await vc.disconnect()
-
-
-@bot.command()
-async def gdam(ctx):
-    """plays a soundbite"""
-    user = ctx.message.author
-    print(user)
-    try:
-        voice_channel = user.voice.channel
-        print(voice_channel)
-        print("user is in ", voice_channel)
-    except:
-        await ctx.send("User not in voice channel")
-        return
-
-    try:
-        vc = await voice_channel.connect()
-        print("connecting to voice channel")
-        print(vc)
-    except:
-        print("voice channel already exists")
-
-    bite = Path(path_baby + "ryan_Gdamn.mp3")
-    try:
-        vc.play(discord.FFmpegPCMAudio(bite), after=lambda e: print('done', e))
-        print(bite," was played")
-    except:
-        print("playback error")
-    await asyncio.sleep(5)
-    await vc.disconnect()
-
-
-@bot.command()
-async def SHAM(ctx):
-    """plays a soundbite"""
-    user = ctx.message.author
-    print(user)
-    try:
-        voice_channel = user.voice.channel
-        print(voice_channel)
-        print("user is in ", voice_channel)
-    except:
-        await ctx.send("User not in voice channel")
-        return
-
-    try:
-        vc = await voice_channel.connect()
-        print("connecting to voice channel")
-        print(vc)
-    except:
-        print("voice channel already exists")
-
-    bite = Path(path_baby + "Sham.mp3")
-    try:
-        vc.play(discord.FFmpegPCMAudio(bite), after=lambda e: print('done', e))
-        print(bite," was played")
-    except:
-        print("playback error")
-    await asyncio.sleep(8.4)
-    await vc.disconnect()
 
 
 @bot.command()
@@ -340,49 +226,6 @@ async def unmuteall(ctx):
 
     for member in voice_channel.members:
         await member.edit(mute=False)
-
-
-@bot.command()
-@commands.has_permissions(administrator=True)
-async def fuck(ctx, target: discord.Member):
-    """Ryan says this"""
-    user = ctx.message.author
-    print(user)
-
-    try:
-        voice_channel = user.voice.channel
-        print(voice_channel)
-        print("user is in ", voice_channel)
-    except:
-        await ctx.send("User not in voice channel")
-        return
-
-    try:
-        vc = await voice_channel.connect()
-        print("connecting to voice channel")
-        print(vc)
-    except:
-        print("voice channel already exists")
-    await ctx.send(f"{target.mention} will be fucked off in 5 seconds")
-    bite = Path(path_baby + "5secbyeby.mp3")
-
-    try:
-        vc.play(discord.FFmpegPCMAudio(bite), after=lambda e: print('done', e))
-        print(bite," was played")
-    except:
-        print("playback error")
-
-    await asyncio.sleep(6)
-    await vc.disconnect()
-    await asyncio.sleep(.25)
-    await ctx.send(f"{target.mention} has been fucked off")
-    await target.kick()
-
-
-@fuck.error
-async def fuck_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
-        ctx.send(f"{ctx.message.author.mention} does not have permission to fuck")
 
 
 @bot.command()

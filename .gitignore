@@ -1,0 +1,20 @@
+#ignore virtual environment
+venv
+
+#ignore all photos for *wheres command
+wheresRyan_photos
+#ignore BROKEN sound files
+soundbites
+#ignore old code that will just cause confusion
+old code
+
+
+#for connecting to discord and bungie apis
+config.json
+
+#google sheets apis
+credentials.json
+credentials_drive.json
+token.pickle
+token_drive.pickle
+

@@ -3,6 +3,7 @@ import asyncio
 import random
 import pickle
 import os.path
+import json
 
 from Cache import CharCache
 from operator import itemgetter
@@ -28,7 +29,9 @@ bung_url = 'https://www.bungie.net/Platform'
 baseurl = 'https://bungie.net/Platform/Destiny2/'
 baseurl_groupv2 = 'https://bungie.net/Platform/GroupV2/'
 
-my_api_key = '251bdc1107ac4b4e8713b3fd0aea1257'
+with open("config.json", "r") as f:
+    my_api_key = json.load(f)["Destiny"]["APICode"]
+
 my_headers = {"X-API-Key": my_api_key}
 membership_types = {'xbox': '1',  'xbone': '1', 'psn': '2', 'steam': '3', 'ps4': '2', 'all': '-1', 'blizzard': '4',
                     'demon': '10', 'next': '254', 'stadia': '5'}
