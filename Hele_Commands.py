@@ -29,7 +29,8 @@ description = '''Helebot version 0.2'''
 bot = commands.Bot(command_prefix='*', description=description)
 
 #initialize calendar
-cal_service = initial_cal()
+#cal_service = initial_cal()
+cal_service = 0
 drive_service = initial_drive()
 current_season = "S14"
 
