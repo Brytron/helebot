@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import asyncio
+import json
 import time
 import datetime
 from google_cal_connect import *
@@ -8,7 +9,10 @@ import dateutil.parser as parser
 
 description="calendar commands"
 bot = commands.Bot(command_prefix='^', description=description)
-TOKEN = 'Mzg4MTQyOTA1NjI3MjQ2NjEy.XRrZPg.HN9i3nbzgdDASAPx1M1uOomCWgM'
+
+with open("config.json", "r") as f:
+    TOKEN = json.load(f)["GoogleCal"]["APICode"]
+
 cal_service = initial_cal()
 
 
