@@ -1,7 +1,4 @@
 import discord
-import random
-import os
-import pickle
 from selectimage import *
 from Destiny_connect import *
 from pathlib import Path
@@ -9,6 +6,7 @@ import asyncio
 from google_cal_connect import *
 from google_spreedsheet_connect import *
 from dateutil import parser
+from dateutil.tz import gettz
 
 
 from discord.ext import commands
@@ -29,8 +27,7 @@ description = '''Helebot version 0.2'''
 bot = commands.Bot(command_prefix='*', description=description)
 
 #initialize calendar
-#cal_service = initial_cal()
-cal_service = 0
+cal_service = initial_cal()
 drive_service = initial_drive()
 current_season = "S14"
 
@@ -41,6 +38,7 @@ Tyler = "LtDangle"
 cal_link = \
     "https://calendar.google.com/calendar?cid=ZGMybmZmbm43NjdiYmt1amdrbjAwOHVzb29AZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ"
 
+countdown_break = False
 
 
 
@@ -69,11 +67,64 @@ async def joke(ctx):
     """outputs a Joke"""
     await ctx.send("Ryan")
 
+@bot.command()
+@commands.has_permissions(administrator=True)
+async def countdown(ctx, event_title, event_date, event_time, event_length=60, event_tz="PST"):
+    """
+    outputs time to an event in the discord bots status Note: separate from google calendar
+    :param ctx: context pass
+    :param event_title: Title of Event Note: should be less than 10 characters
+    :param event_date: date: suggested format: 01/01/1900
+    :param event_time: time of event. suggested format 12:00AM
+    :param event_length: length of time of event in minutes. default: 60
+    :param event_tz: time zone where the event takes place. Supported timezones PST, MST, CST, and EST. default PST
+    :return:
+    """
+    channel = ctx
+    tzinfos = {"PST": gettz("US/Pacific"), "CST": gettz("Central Standard Time"),
+               "MST": gettz("Mountain Standard Time"),
+               "EST": gettz("Eastern Standard Time")}
+    try:
+        event_datetime = parser.parse(event_date + " " + event_time + " " + event_tz, tzinfos=tzinfos)
+        now_time = datetime.datetime.now().astimezone()
+        while event_datetime + datetime.timedelta(minutes=event_length) >= now_time and not countdown_break:
+            event_difference = event_datetime - now_time
+            if event_datetime < now_time:
+                event_str = f"{event_title} is happening now"
+            elif event_datetime.date() == now_time.date():
+                hours = int(event_difference.seconds / 3600)
+                minutes = int(event_difference.seconds / 60) % 60
+                event_str = f"{event_title} today in {hours}h {minutes}m"
+            else:
+                event_str = \
+                    f"{event_title} in {event_difference.days}d{int(event_difference.seconds / 3600)}h"
+            await asyncio.sleep(20)
+            now_time = datetime.datetime.now().astimezone()
+            if now_time.minute % 1 == 0:
+                game = discord.Game(event_str)
+                await bot.change_presence(activity=game)
+
+
+    except parser._parser.ParserError or OverflowError:
+        await ctx.send("Parser failed *help for more info")
 
 @bot.command()
 @commands.has_permissions(administrator=True)
-async def initial_cal(ctx):
+async def countdownClear(ctx):
+    await ctx.send("Clearing countdown timer")
+    global countdown_break
+    countdown_break = True
+    await asyncio.sleep(40)
+    countdown_break = False
+    await bot.change_presence()
+    await ctx.send("Countdown timer cleared")
+
+
+@bot.command()
+@commands.has_permissions(administrator=True)
+async def initialCal(ctx):
     """
+    WORK IN PROGRESS
     initializes the calendar for the server
     """
     channel = ctx
@@ -102,11 +153,14 @@ async def initial_cal(ctx):
                 next_check = datetime.datetime.now().replace(minute=0, second=0, microsecond=0) + datetime.timedelta(
                     hours=1)
             # find time to next event
-            time_to_event = time_to(tracked_event['start']['dateTime'])
             old_event_str = None
-            event_time = parser.parse(tracked_event['start']['dateTime']).replace(tzinfo=None)
+            if tracked_event is not None:
+                time_to_event = time_to(tracked_event['start']['dateTime'])
+                event_time = parser.parse(tracked_event['start']['dateTime']).replace(tzinfo=None)
             while datetime.datetime.now() < next_check:
-                if event_time > datetime.datetime.now():
+                if tracked_event is None:
+                    event_str = "No Upcoming Events"
+                elif event_time > datetime.datetime.now():
                     if event_time.date() == datetime.datetime.now().date():
                         event_str = f"{tracked_event['summary']} today {event_time.hour}h{event_time.minute}m"
                     else:
@@ -118,7 +172,8 @@ async def initial_cal(ctx):
                     game = discord.Game(event_str)
                     await bot.change_presence(activity=game)
                 await asyncio.sleep(60)
-                time_to_event = time_to(tracked_event['start']['dateTime'])
+                if tracked_event is not None:
+                    time_to_event = time_to(tracked_event['start']['dateTime'])
                 old_event_str = event_str
             await asyncio.sleep(30)
         next_day = next_day + datetime.timedelta(days=1)
@@ -185,7 +240,7 @@ async def assemble(ctx, target: discord.Role):
 
     add_all(guy1,guy2,guy3,vista,out)
 
-    await ctx.send(target.mention,file=discord.File(out))
+    await ctx.send(target.mention, file=discord.File(out))
 
 
 @bot.command()

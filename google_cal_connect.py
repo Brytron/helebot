@@ -22,8 +22,7 @@ class SimpleEvent:
 
 
 def initial_cal():
-    """Shows basic usage of the Google Calendar API.
-    Prints the start and name of the next 10 events on the user's calendar.
+    """initializes calandar tokens
     """
     creds = None
     # The file token.pickle stores the user's access and refresh tokens, and is
@@ -70,7 +69,13 @@ def next_event(service):
     events_result = service.events().list(calendarId = cal_id, timeMin=now,
                                         maxResults=1, singleEvents=True,
                                         orderBy='startTime').execute()
-    return events_result.get('items', [0])[0]
+    try:
+        out = events_result.get('items', [0])[0]
+    except IndexError:
+        out = None
+
+    return out
+
 
 
 
@@ -88,12 +93,12 @@ def delete_event(service,event_name):
     if event_name == "next":
         event_id = next_event(service)['id']
     else:
-        event_id = find_full_event(service,event_name)['id']
+        event_id = find_full_event(service, event_name)['id']
     service.events().delete(calendarId=cal_id, eventId=event_id).execute()
 
 
 def show_cal_list():
-    service=initial_cal()
+    service = initial_cal()
     cal_list = service.calendarList().list().execute()
     cals = cal_list.get('items', [])
     print(cals)
