@@ -12,6 +12,7 @@ from dateutil import parser
 from datetime import datetime
 from datetime import timedelta
 from pytz import timezone
+import string
 
 
 class D2Profile:
@@ -48,6 +49,10 @@ trials_game_type = {84:'Elimination'}
 #D2Profiles = CharCache()
 D2Stats = CharCache()
 
+def replace_hash(name_in):
+    "replaces the '#' in user_input of bungie names"
+    name_api = name_in.replace("#", "%23")
+    return name_api
 
 def load_profiles():
     """returns  in d2 character profiles from a pickled file"""
@@ -73,7 +78,7 @@ async def get_characters(session, membership_id, console):
     """return a list of int64 id player characters"""
 
     membershipType = membership_types[console]
-
+    print(membershipType)
     destinyMembershipId = membership_id
     url = bung_url + f"/Destiny2/{membershipType}/Profile/{destinyMembershipId}/?components=100"
 
@@ -85,20 +90,31 @@ async def get_characters(session, membership_id, console):
 
 async def return_member_id(session, name, console):
     """returns user id from input string"""
-    membershipType = membership_types["steam"]
-    #membershipType = membership_types[console]
+    search_membershipType = membership_types["all"]
+    user_selected_membershipType = membership_types[console]
 
     print(name)
-    url = bung_url + f"/Destiny2/SearchDestinyPlayer/{membershipType}/{name}/"
+    name = replace_hash(name)
+    url = bung_url + f"/Destiny2/SearchDestinyPlayer/{search_membershipType}/{name}/"
     print(url)
     response = await fetch(session, url)
-    print(response)
-    print(response['Response'][0]['membershipId'])
-    return response['Response'][0]['membershipId']
+    membership_id = None
+    for item in response['Response']:
+        print(item)
+        print(user_selected_membershipType)
+        print(item['applicableMembershipTypes'])
+        print(item['membershipId'])
+        for i in item['applicableMembershipTypes']:
+            if str(i) == str(user_selected_membershipType):
+                print('member id found')
+                return item['membershipId']
+
+    return membership_id
+
 
 
 async def return_member_id_from_code(session, credential, console):
-
+    """returns a id from a steam code, this can probably be removed at some point"""
     membershipType = membership_types[console]
 
     crType = 'SteamId'
@@ -109,14 +125,13 @@ async def return_member_id_from_code(session, credential, console):
     return response['Response']['membershipId']
 
 
-async def register(title, steamID):
+async def register(title, bungieID, console):
     """
-    connects a users name and steam id and create a profile for a user
+    connects a users name and bungieID and create a profile for a user
     """
     async with aiohttp.ClientSession() as session:
-        console = "steam"
         profile = D2Profile()
-        profile.user_id = await return_member_id_from_code(session, steamID, console)
+        profile.user_id = await return_member_id(session, bungieID, console)
         profile.char_ids = await get_characters(session, profile.user_id, console)
         profile.console = console
         key = title + console
@@ -144,12 +159,7 @@ async def find_profile(session, name, console):
         return D2Profiles.cache[key]['value']
     else:
         profile = D2Profile()
-        # checks if steamid or user name
-        if name[0].isdigit():
-            profile.user_id = await return_member_id_from_code(session, name, console)
-        else:
-            profile.user_id = await return_member_id(session, name, console)
-
+        profile.user_id = await return_member_id(session, name, console)
         profile.char_ids = await get_characters(session, profile.user_id, console)
         profile.console = console
         D2Profiles.update(key, profile)
@@ -527,17 +537,19 @@ async def example():
     #test = await banner_stats("Brytron","steam",season="S11")
 
     async with aiohttp.ClientSession() as session:
-        membershipType = membership_types['stadia']
+        membershipType = membership_types['all']
         # membershipType = membership_types[console]
-        name = 'Bryton'
-        url = bung_url + f"/Destiny2/SearchDestinyPlayer/{membershipType}/{name}/"
-        print(url)
-        response = await fetch(session, url)
+        #name = 'Congohunter#2140'
+        name = 'Bryton#3746'
+        name = replace_hash(name)
+        response = await return_member_id(session, name, 'steam')
         print(response)
-        print(response['Response'][0]['membershipId'])
+        #print(response['Response'][0]['membershipId'])
+        #test = await get_characters(session, name, "all")
+        #print(test)
 
 
-
-#loop = asyncio.get_event_loop()
-#loop.run_until_complete(example())
+if __name__ == '__main__':
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(example())
 

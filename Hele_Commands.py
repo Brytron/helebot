@@ -16,12 +16,6 @@ with open("config.json", "r") as f:
     TOKEN = json.load(f)["Discord"]["APICode"]
 
 #version 0.3 (public)
-#
-#warnings:
-#playing sound files does not work natively on windows
-#discord bot must be out of a voice channel to play another soundbite
-#
-# needs implementing:
 
 description = '''Helebot version 0.2'''
 bot = commands.Bot(command_prefix='*', description=description)
@@ -335,9 +329,9 @@ async def trials(ctx, player, week=None, season=current_season, console="steam",
         ctx.send("file type is not supported")
 
 @bot.command()
-async def D2register(ctx,title,steamid):
-    """connects any user definted title to a steamID"""
-    output = await register(title, steamid)
+async def D2register(ctx,title,bungieid, console="steam"):
+    """connects any user defined title to a bungieID"""
+    output = await register(title, bungieid, console)
     if output == 1:
         await ctx.send("registration success")
     else:

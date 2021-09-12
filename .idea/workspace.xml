@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="7ed70d56-c148-48d3-a2e5-76652e8ce5d4" name="Default Changelist" comment="added countdown and countdownClear functions&#10;worked on google Calander integration">
+    <list default="true" id="7ed70d56-c148-48d3-a2e5-76652e8ce5d4" name="Default Changelist" comment="changed destiny2 season">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Destiny_connect.py" beforeDir="false" afterPath="$PROJECT_DIR$/Destiny_connect.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Hele_Commands.py" beforeDir="false" afterPath="$PROJECT_DIR$/Hele_Commands.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/d2CharCache.pickle" beforeDir="false" afterPath="$PROJECT_DIR$/d2CharCache.pickle" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -32,6 +33,24 @@
     <property name="com.intellij.ide.scratch.LRUPopupBuilder$1/New Scratch File" value="Python" />
   </component>
   <component name="RunManager" selected="Python.Hele_Commands">
+    <configuration name="Destiny_connect" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="helebot" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Destiny_connect.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="true" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="Hele_Commands" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="helebot" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -98,6 +117,8 @@
     <recent_temporary>
       <list>
         <item itemvalue="Python.Hele_Commands" />
+        <item itemvalue="Python.Destiny_connect" />
+        <item itemvalue="Python.Destiny_connect" />
         <item itemvalue="Python.scratch_3" />
         <item itemvalue="Python.scratch_2" />
       </list>
@@ -140,7 +161,14 @@
       <option name="project" value="LOCAL" />
       <updated>1628982438859</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="changed destiny2 season">
+      <created>1631420265569</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1631420265569</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -159,6 +187,7 @@
     <MESSAGE value="remove old problem history" />
     <MESSAGE value="Modify .gitignore" />
     <MESSAGE value="added countdown and countdownClear functions&#10;worked on google Calander integration" />
-    <option name="LAST_COMMIT_MESSAGE" value="added countdown and countdownClear functions&#10;worked on google Calander integration" />
+    <MESSAGE value="changed destiny2 season" />
+    <option name="LAST_COMMIT_MESSAGE" value="changed destiny2 season" />
   </component>
 </project>
