@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="7ed70d56-c148-48d3-a2e5-76652e8ce5d4" name="Default Changelist" comment="changed destiny2 season">
+    <list default="true" id="7ed70d56-c148-48d3-a2e5-76652e8ce5d4" name="Default Changelist" comment="updated register and search bungie ID method for crossplay">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Destiny_connect.py" beforeDir="false" afterPath="$PROJECT_DIR$/Destiny_connect.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Hele_Commands.py" beforeDir="false" afterPath="$PROJECT_DIR$/Hele_Commands.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/d2CharCache.pickle" beforeDir="false" afterPath="$PROJECT_DIR$/d2CharCache.pickle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/d2CharCache.pickle" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,6 +37,9 @@
       <module name="helebot" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
       <option name="SDK_HOME" value="" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="true" />
@@ -168,7 +171,14 @@
       <option name="project" value="LOCAL" />
       <updated>1631420265569</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="updated register and search bungie ID method for crossplay">
+      <created>1631465158875</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1631465158875</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -188,6 +198,7 @@
     <MESSAGE value="Modify .gitignore" />
     <MESSAGE value="added countdown and countdownClear functions&#10;worked on google Calander integration" />
     <MESSAGE value="changed destiny2 season" />
-    <option name="LAST_COMMIT_MESSAGE" value="changed destiny2 season" />
+    <MESSAGE value="updated register and search bungie ID method for crossplay" />
+    <option name="LAST_COMMIT_MESSAGE" value="updated register and search bungie ID method for crossplay" />
   </component>
 </project>

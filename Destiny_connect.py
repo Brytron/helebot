@@ -4,6 +4,7 @@ import random
 import pickle
 import os.path
 import json
+import pandas as pd
 
 from Cache import CharCache
 from operator import itemgetter
@@ -12,7 +13,6 @@ from dateutil import parser
 from datetime import datetime
 from datetime import timedelta
 from pytz import timezone
-import string
 
 
 class D2Profile:
@@ -317,6 +317,82 @@ async def build_trials(session, name, console, start_search_on, stop_search_on):
     return sorted(win_list, key=itemgetter('period'))
 
 
+def create_trials_df(user_name, in_dict):
+    "returns a dataframe with username appended to column fields"
+    return pd.DataFrame(data=in_dict).set_index('period').rename(
+        columns={"win/loss": user_name + " win/loss", "kills": user_name + " kills", "assists": user_name + " assists",
+                 "deaths": user_name + " deaths", "mode": user_name + " mode", "duration": user_name + " duration"}
+    )
+
+
+def pushto_excel_trials_team(in_df, time_start, time_stop, savename, tz, user1, user2, user3):
+    """push win and loss data to excel sheet note full trial_dict in for loop is unoptimised"""
+    time_start = parser.parse(time_start).astimezone(timezone(tz))
+    time_stop = parser.parse(time_stop).astimezone(timezone(tz))
+    wb = load_workbook(filename='trialsteam_base.xlsx')
+    ws = wb.active
+    trials_dict = in_df.T.to_dict()
+    print(trials_dict)
+    ws['B2'] = time_start.date()
+    ws['B3'] = time_stop.date()
+    ws['C4'] = user1
+    ws['H4'] = user2
+    ws['M4'] = user3
+    game_col = 6
+    for game in trials_dict:
+        ws['A'+str(game_col)] = game_col - 5
+        print(game)
+        game_date = parser.parse(game).astimezone(timezone(tz))
+
+        if trials_dict[game][user1 + ' win/loss'] == "Victory":
+            ws['B'+str(game_col)] = "W"
+        else:
+            ws['B'+str(game_col)] = "L"
+
+        ws['C' + str(game_col)] = trials_dict[game][user1+' kills']
+        ws['D' + str(game_col)] = trials_dict[game][user1+' assists']
+        ws['E' + str(game_col)] = trials_dict[game][user1+' deaths']
+
+        ws['H' + str(game_col)] = trials_dict[game][user2+' kills']
+        ws['I' + str(game_col)] = trials_dict[game][user2+' assists']
+        ws['J' + str(game_col)] = trials_dict[game][user2+' deaths']
+
+        if user3 is not None:
+            ws['M' + str(game_col)] = trials_dict[game][user3 + ' kills']
+            ws['N' + str(game_col)] = trials_dict[game][user3 + ' assists']
+            ws['O' + str(game_col)] = trials_dict[game][user3 + ' deaths']
+
+        ws['T' + str(game_col)] = game_date.date()
+        ws['U' + str(game_col)] = game_date.time()
+        ws['Z' + str(game_col)] = trials_dict[game][user1+' duration']
+        game_col = game_col+1
+
+    filename = f'{time_start.strftime("%m_%d_%y")}trialsteam_{savename}.xlsx'
+    wb.save(filename)
+    return filename
+
+
+async def build_trials_team(user1, user2, user3=None, console='steam', season=current_season, week=None, tz="US/Pacific"):
+    "using 2 or more player create a collection of stats of games where the user played together"
+    async with aiohttp.ClientSession() as session:
+        out_df = None
+        time = find_scope_time(season, week)
+        user1_games = await build_trials(session, user1, console, time['start'], time['stop'])
+        user2_games = await build_trials(session, user2, console, time['start'], time['stop'])
+        user1_df = create_trials_df(user1, user1_games)
+        user2_df = create_trials_df(user2, user2_games)
+        print(user1_df)
+        out_df = user1_df.join(user2_df, on='period', how='inner')
+        if user3 is not None:
+            user3_games = await build_trials(session, user3, console, time['start'], time['stop'])
+            user3_df = create_trials_df(user3, user3_games)
+            out_df = out_df.join(user3_df, on='period', how='inner')
+        filename = pushto_excel_trials_team(
+            out_df, time['start'], time['stop'], user1+user2+str(user3), tz, user1, user2, user3)
+        print(filename)
+        return filename
+
+
 def pushto_excel_trials(trials_build, time_start, time_stop, savename, tz):
     """push win and loss data to excel sheet"""
     time_start = parser.parse(time_start).astimezone(timezone(tz))
@@ -539,11 +615,10 @@ async def example():
     async with aiohttp.ClientSession() as session:
         membershipType = membership_types['all']
         # membershipType = membership_types[console]
-        #name = 'Congohunter#2140'
-        name = 'Bryton#3746'
-        name = replace_hash(name)
-        response = await return_member_id(session, name, 'steam')
-        print(response)
+        name2 = 'Congohunter#2140'
+        name1 = 'Bryton#3746'
+        name3 = 'Jet3010#9562'
+        await build_trials_team(name1, name2, name3)
         #print(response['Response'][0]['membershipId'])
         #test = await get_characters(session, name, "all")
         #print(test)

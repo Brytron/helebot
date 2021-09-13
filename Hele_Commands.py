@@ -328,6 +328,22 @@ async def trials(ctx, player, week=None, season=current_season, console="steam",
     else:
         ctx.send("file type is not supported")
 
+
+@bot.command()
+async def trialsteam(ctx, player1, player2, player3 = None, week=None, season=current_season, console="steam", file_type="sheets", tz="US/Pacific"):
+    """builds a excel file(compatible with google sheets) of stats, and progression for a specified season or week of trials for an 2-3 guardians
+    Example: *trialsteam Bryton#1234 "player2" "player3" skip S6, steam, excel, tz
+    only supports S6 and above"""
+    file_name = await build_trials_team(player1, player2, player3, console, season, week, tz)
+    if file_type == "excel":
+        await ctx.send(file=discord.File(file_name))
+    elif file_type == "sheets":
+        file_link = excel_to_sheets(drive_service, file_name)
+        await ctx.send(file_link)
+    else:
+        ctx.send("file type is not supported")
+
+
 @bot.command()
 async def D2register(ctx,title,bungieid, console="steam"):
     """connects any user defined title to a bungieID"""
