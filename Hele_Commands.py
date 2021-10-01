@@ -1,13 +1,12 @@
 import discord
 from selectimage import *
-from Destiny_connect import *
+from Destiny_Stats import *
 from pathlib import Path
 import asyncio
 from google_cal_connect import *
 from google_spreedsheet_connect import *
 from dateutil import parser
 from dateutil.tz import gettz
-
 
 from discord.ext import commands
 
@@ -57,11 +56,6 @@ async def print_today(channel, event_list):
 
 
 @bot.command()
-async def joke(ctx):
-    """outputs a Joke"""
-    await ctx.send("Ryan")
-
-@bot.command()
 @commands.has_permissions(administrator=True)
 async def countdown(ctx, event_title, event_date, event_time, event_length=60, event_tz="PST"):
     """
@@ -101,6 +95,7 @@ async def countdown(ctx, event_title, event_date, event_time, event_length=60, e
 
     except parser._parser.ParserError or OverflowError:
         await ctx.send("Parser failed *help for more info")
+
 
 @bot.command()
 @commands.has_permissions(administrator=True)
@@ -285,9 +280,9 @@ async def pong(ctx,target: discord.Member):
 
 
 @bot.command()
-async def comp(ctx,player,season=current_season, console="steam", file_type="sheets", tz="US/Pacific"):
+async def comp(ctx, player, season=current_season, console="steam", file_type="sheets", tz="US/Pacific"):
     """builds a excel file(compatible with google sheets) of stats, and progression for a specified season of competitive for an individual destiny player
-    Query: comp {player} {season} {console} Example: comp Brytron S6 pc sheets
+    Query: comp {player} {season} {console} Example: comp Bryton S6 pc sheets
     only supports S6 and above"""
     new_list = await competitive_stats(player, console, season)
     file_name = pushto_excel_comp(new_list, season, player, tz)
