@@ -15,14 +15,22 @@ with open("config.json", "r") as f:
     TOKEN = json.load(f)["Discord"]["APICode"]
 
 #version 0.3 (public)
+intents = discord.Intents.default()
+intents.messages = True
+intents.presences = True
+intents.webhooks = True
+intents.guild_messages = True
+intents.members = True
+intents.typing = True
+intents.message_content = True
 
 description = '''Helebot version 0.2'''
-bot = commands.Bot(command_prefix='*', description=description)
+bot = commands.Bot(command_prefix='*', description=description, intents=intents)
 
 #initialize calendar
 cal_service = initial_cal()
 drive_service = initial_drive()
-current_season = "S15"
+current_season = "S19"
 
 pic_path = "wheresRyan_photos/"
 Ryan = "Congohunter"
@@ -32,9 +40,6 @@ cal_link = \
     "https://calendar.google.com/calendar?cid=ZGMybmZmbm43NjdiYmt1amdrbjAwOHVzb29AZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ"
 
 countdown_break = False
-
-
-
 @bot.event
 async def on_ready():
     print('Logged in as')
