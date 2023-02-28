@@ -4,10 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7ed70d56-c148-48d3-a2e5-76652e8ce5d4" name="Default Changelist" comment="added new trialsteam functionality">
+    <list default="true" id="7ed70d56-c148-48d3-a2e5-76652e8ce5d4" name="Default Changelist" comment="updated Discord intents">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Destiny_Stats.py" beforeDir="false" afterPath="$PROJECT_DIR$/Destiny_Stats.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Hele_Commands.py" beforeDir="false" afterPath="$PROJECT_DIR$/Hele_Commands.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -32,13 +30,13 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="Python.Hele_Commands">
     <configuration name="DaysSinces" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="helebot" />
@@ -225,7 +223,14 @@
       <option name="project" value="LOCAL" />
       <updated>1631496893065</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="updated Discord intents">
+      <created>1675471617493</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1675471617493</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -246,6 +251,7 @@
     <MESSAGE value="changed destiny2 season" />
     <MESSAGE value="updated register and search bungie ID method for crossplay" />
     <MESSAGE value="added new trialsteam functionality" />
-    <option name="LAST_COMMIT_MESSAGE" value="added new trialsteam functionality" />
+    <MESSAGE value="updated Discord intents" />
+    <option name="LAST_COMMIT_MESSAGE" value="updated Discord intents" />
   </component>
 </project>
