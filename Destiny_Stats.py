@@ -19,8 +19,8 @@ seasons = \
      'S14': ["2021-05-11T17:00:00Z", "2021-08-11T17:00:00Z"], 'S15': ["2021-08-24T17:00:00Z", "2022-02-22T17:00:00Z"],
      'S16': ["2022-02-22T17:00:00Z", "2022-05-24T17:00:00Z"], 'S17': ["2022-05-24T17:00:00Z", "2022-08-23T17:00:00Z"],
      'S18': ["2022-08-23T17:00:00Z", "2022-12-06T17:00:00Z"], 'S19': ["2022-12-06T17:00:00Z", "2023-02-28T17:00:00Z"],
-     'S20': ["2023-02-28T17:00:00Z", "2023-12-31T17:00:00Z"], }
-current_season = 'S20'
+     'S20': ["2023-02-28T17:00:00Z", "2023-12-31T17:00:00Z"], 'S21': ["2023-05-21T17:00:00Z", "2023-08-22T17:00:00Z"]}
+current_season = 'S21'
 game_types = { 74:'Control', 72:'Clash', 37:'Survival', 38:'Countdown'}
 trials_game_type = {84:'Elimination'}
 
@@ -28,8 +28,9 @@ trials_game_type = {84:'Elimination'}
 async def get_historical_activitys(session, destinyMembershipId, console, characterId, count, page='0', mode='0'):
     """gets historical stats for daystart to dayend"""
     membershipType = membership_types[console]
-    url = bung_url + f'/Destiny2/{membershipType}/Account/{destinyMembershipId}/Character/{characterId}/Stats/Activities/' \
-          + f'?count={count}&mode={mode}&page={page}'
+    url = \
+        bung_url + f'/Destiny2/{membershipType}/Account/{destinyMembershipId}/Character/{characterId}/Stats/Activities/' \
+        + f'?count={count}&mode={mode}&page={page}'
     print(url)
 
     response = await fetch(session, url)

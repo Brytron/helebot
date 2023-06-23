@@ -26,7 +26,7 @@ with open("config.json", "r") as f:
 
 my_headers = {"X-API-Key": my_api_key}
 membership_types = {'xbox': '1',  'xbone': '1', 'psn': '2', 'steam': '3', 'ps4': '2', 'all': '-1', 'blizzard': '4',
-                    'demon': '10', 'next': '254', 'stadia': '5'}
+                    'demon': '10', 'next': '254'}
 seasons = \
     {'S7': ["2019-06-04T17:00:00Z", "2019-10-01T17:00:00Z"], 'S6': ["2019-03-05T17:00:00Z", "2019-06-04T17:00:00Z"],
      'S8': ["2019-10-01T17:00:00Z", "2019-12-010T17:00:00Z"], 'S9': ["2019-12-10T17:00:00Z", "2020-03-09T17:00:00Z"],
@@ -35,8 +35,8 @@ seasons = \
      'S14': ["2021-05-11T17:00:00Z", "2021-08-11T17:00:00Z"], 'S15': ["2021-08-24T17:00:00Z", "2022-02-22T17:00:00Z"],
      'S16': ["2022-02-22T17:00:00Z", "2022-05-24T17:00:00Z"], 'S17': ["2022-05-24T17:00:00Z", "2022-08-23T17:00:00Z"],
      'S18': ["2022-08-23T17:00:00Z", "2022-12-06T17:00:00Z"], 'S19': ["2022-12-06T17:00:00Z", "2023-02-28T17:00:00Z"],
-     'S20': ["2023-02-28T17:00:00Z", "2023-12-31T17:00:00Z"], }
-current_season = 'S20'
+     'S20': ["2023-02-28T17:00:00Z", "2023-12-31T17:00:00Z"], 'S21': ["2023-05-21T17:00:00Z", "2023-08-22T17:00:00Z"]}
+current_season = 'S21'
 game_types = { 74:'Control', 72:'Clash', 37:'Survival', 38:'Countdown'}
 trials_game_type = {84:'Elimination'}
 
@@ -109,7 +109,7 @@ async def return_member_id(session, name, console):
 
 
 async def return_member_id_from_code(session, credential, console):
-    """returns a id from a steam code, this can probably be removed at some point"""
+    """returns an id from a steam code, this can probably be removed at some point"""
     membershipType = membership_types[console]
 
     crType = 'SteamId'
@@ -122,7 +122,7 @@ async def return_member_id_from_code(session, credential, console):
 
 async def register(title, bungieID, console):
     """
-    connects a users name and bungieID and create a profile for a user
+    connects a users name and bungieID and creates a profile for a user
     """
     async with aiohttp.ClientSession() as session:
         profile = D2Profile()
@@ -145,7 +145,7 @@ async def register(title, bungieID, console):
 
 async def find_profile(session, name, console):
     """
-    Searches a cache for name if in cache return user_id char_id, and char_platform if not in cache search destiny
+    Searches a cache for name if in cache returns user_id char_id, and char_platform. if not in cache search destiny
     api for same information
     """
     key = name + console
