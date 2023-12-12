@@ -30,7 +30,7 @@ bot = commands.Bot(command_prefix='*', description=description, intents=intents)
 #initialize calendar
 cal_service = initial_cal()
 drive_service = initial_drive()
-current_season = "S20"
+current_season = "S23"
 
 pic_path = "wheresRyan_photos/"
 Ryan = "Congohunter"

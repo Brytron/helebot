@@ -4,8 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7ed70d56-c148-48d3-a2e5-76652e8ce5d4" name="Default Changelist" comment="updated Discord intents">
+    <list default="true" id="7ed70d56-c148-48d3-a2e5-76652e8ce5d4" name="Default Changelist" comment="set season to season 21 in destiny">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Destiny_Stats.py" beforeDir="false" afterPath="$PROJECT_DIR$/Destiny_Stats.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Destiny_connect.py" beforeDir="false" afterPath="$PROJECT_DIR$/Destiny_connect.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Hele_Commands.py" beforeDir="false" afterPath="$PROJECT_DIR$/Hele_Commands.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/google_cal_connect.py" beforeDir="false" afterPath="$PROJECT_DIR$/google_cal_connect.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -34,6 +38,7 @@
   &quot;keyToString&quot;: {
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Ryank&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
 }</component>
@@ -230,7 +235,21 @@
       <option name="project" value="LOCAL" />
       <updated>1675471617493</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="set season to season 20 in destiny">
+      <created>1677550202174</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1677550202174</updated>
+    </task>
+    <task id="LOCAL-00010" summary="set season to season 21 in destiny">
+      <created>1687494318503</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1687494318503</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -252,6 +271,8 @@
     <MESSAGE value="updated register and search bungie ID method for crossplay" />
     <MESSAGE value="added new trialsteam functionality" />
     <MESSAGE value="updated Discord intents" />
-    <option name="LAST_COMMIT_MESSAGE" value="updated Discord intents" />
+    <MESSAGE value="set season to season 20 in destiny" />
+    <MESSAGE value="set season to season 21 in destiny" />
+    <option name="LAST_COMMIT_MESSAGE" value="set season to season 21 in destiny" />
   </component>
 </project>

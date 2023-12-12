@@ -65,7 +65,7 @@ def get_events():
 
 
 def next_event(service):
-    now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
+    now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
     events_result = service.events().list(calendarId = cal_id, timeMin=now,
                                         maxResults=1, singleEvents=True,
                                         orderBy='startTime').execute()
@@ -75,8 +75,6 @@ def next_event(service):
         out = None
 
     return out
-
-
 
 
 def get_weeks_events(service):
@@ -170,5 +168,5 @@ def pretty_week():
 def main():
     print(pretty_week())
 
-#main()
+# main()
 
