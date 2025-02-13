@@ -21,8 +21,9 @@ seasons = \
      'S18': ["2022-08-23T17:00:00Z", "2022-12-06T17:00:00Z"], 'S19': ["2022-12-06T17:00:00Z", "2023-02-28T17:00:00Z"],
      'S20': ["2023-02-28T17:00:00Z", "2023-05-21T17:00:00Z"], 'S21': ["2023-05-21T17:00:00Z", "2023-08-22T17:00:00Z"],
      'S22': ["2023-08-22T17:00:00Z", "2023-11-28T17:00:00Z"], 'S23': ["2023-11-28T17:00:00Z", "2024-06-04T17:00:00Z"],
-     'S24': ["2024-06-04T17:00:00Z", "2024-10-08T17:00:00Z"], 'S25': ["2024-10-08T17:00:00Z", "2025-02-04T17:00:00Z"]}
-current_season = 'S25'
+     'S24': ["2024-06-04T17:00:00Z", "2024-10-08T17:00:00Z"], 'S25': ["2024-10-08T17:00:00Z", "2025-02-04T17:00:00Z"],
+     'S26': ["2025-02-04T17:00:00Z", "2025-06-15T17:00:00Z"]}
+current_season = 'S26'
 game_types = { 74:'Control', 72:'Clash', 37:'Survival', 38:'Countdown'}
 trials_game_type = {84:'Elimination'}
 
@@ -125,9 +126,9 @@ def pushto_excel_banner(banner_build, time_start, time_stop, savename, tz):
         ws['I' + str(game_col)] = game_date.time()
         ws['N' + str(game_col)] = game['duration']
         game_col = game_col + 1
-
+    folder = f'destinysheets'
     filename = f'{time_start.strftime("%m_%d_%y")}banner_{savename}.xlsx'
-    wb.save(filename)
+    wb.save(folder + '/' + filename)
     return filename
 
 

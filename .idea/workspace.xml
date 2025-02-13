@@ -5,10 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7ed70d56-c148-48d3-a2e5-76652e8ce5d4" name="Default Changelist" comment="set season to season 21 in destiny">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Destiny_Stats.py" beforeDir="false" afterPath="$PROJECT_DIR$/Destiny_Stats.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Destiny_connect.py" beforeDir="false" afterPath="$PROJECT_DIR$/Destiny_connect.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Hele_Commands.py" beforeDir="false" afterPath="$PROJECT_DIR$/Hele_Commands.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/google_spreedsheet_connect.py" beforeDir="false" afterPath="$PROJECT_DIR$/google_spreedsheet_connect.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

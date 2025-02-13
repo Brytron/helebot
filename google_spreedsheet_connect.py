@@ -41,11 +41,11 @@ def excel_to_sheets(service,excel_file):
 
     mime_type = "application/vnd.ms-excel"
     meta = {'name':excel_file, 'mimeType':"application/vnd.google-apps.spreadsheet"}
-    media = MediaFileUpload(filename=excel_file, mimetype=mime_type)
+    media = MediaFileUpload(filename=excel_file, mimetype=mime_type,)
 
     file = service.files().create(body=meta,
                                         media_body=media,
-                                        fields='webViewLink, id',).execute()
+                                        fields='webViewLink, id').execute()
 
     file_id = file.get('id')
     permit_metadata = {'role': 'writer', 'type': 'anyone'}

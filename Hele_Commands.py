@@ -30,7 +30,7 @@ bot = commands.Bot(command_prefix='*', description=description, intents=intents)
 #initialize calendar
 cal_service = initial_cal()
 drive_service = initial_drive()
-current_season = "S24"
+current_season = "S26"
 
 pic_path = "wheresRyan_photos/"
 Ryan = "Congohunter"
@@ -303,7 +303,7 @@ async def comp(ctx, player, season=current_season, console="steam", file_type="s
 @bot.command()
 async def banner(ctx, player, week=None, season=current_season, console="steam", file_type="sheets", tz="US/Pacific"):
     """builds a excel file(compatible with google sheets) of stats, and progression for a specified season or week of iron banner for an individual destiny player
-    Example: banner Brytron 8/27/19 S6 pc sheets or banner Brytron#11867 skip S6, pc, excel
+    Example: banner Bryton 8/27/19 S6 pc sheets or banner Bryton#11867 skip S6, pc, excel
     only supports S6 and above"""
     file_name = await banner_stats(player, console, season, week, tz)
     if file_type == "excel":
